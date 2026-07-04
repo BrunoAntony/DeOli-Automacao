@@ -2562,7 +2562,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #3b82f6;outline-offset
                     </select>
                   </label>
                   <label style="display:flex;flex-direction:column;gap:7px;font-size:13.5px;font-weight:600;color:var(--color-text-secondary);">Forçar modelo <span style="font-weight:400;">(avançado)</span>
-                    <input name="forcarModelo" value="{{ aeForm.forcarModelo }}" onInput="{{ onAgentField }}" placeholder="ex: gemini-2.0-flash" style="padding:12px 14px;border:1px solid var(--color-border-tertiary);border-radius:10px;background:var(--color-background-primary);font-size:14px;">
+                    <input name="forcarModelo" value="{{ aeForm.forcarModelo }}" onInput="{{ onAgentField }}" placeholder="ex: gemini-flash-latest" style="padding:12px 14px;border:1px solid var(--color-border-tertiary);border-radius:10px;background:var(--color-background-primary);font-size:14px;">
                   </label>
                 </div>
                 <div style="display:flex;flex-direction:column;gap:12px;border:1px solid var(--color-border-tertiary);border-radius:12px;padding:18px;background:var(--color-background-primary);">
@@ -3113,7 +3113,7 @@ class Component extends DCLogic {
     wppStatusText: '',
     wppError: '',
     wppBusy: false,
-    uazapi: { baseUrl: '', adminToken: '', instanceToken: '', instanceName: 'versatil', phone: '', geminiKey: '', geminiModel: 'gemini-2.0-flash' },
+    uazapi: { baseUrl: '', adminToken: '', instanceToken: '', instanceName: 'versatil', phone: '', geminiKey: '', geminiModel: 'gemini-flash-latest' },
   };
 
   SUPA_URL = 'https://kvxsqbfwakfqdxzilvix.supabase.co';
@@ -3169,10 +3169,10 @@ class Component extends DCLogic {
     let saved = null;
     try { saved = JSON.parse(localStorage.getItem('versatil_ca') || 'null'); } catch (e) {}
     const defAgentes = [
-      { id: 'ag1', nome: 'Atendente Virtual', icon: 'ti-headset', cor: '#3b82f6', ativo: true, papel: 'atendimento', desc: 'Responde dúvidas de clientes automaticamente com base no histórico da conversa.', tom: 'Cordial e objetivo', modelo: 'Claude Haiku', gatilho: 'Mensagem recebida', gemini: { apiKey: '', model: 'gemini-2.0-flash' }, canais: [] },
-      { id: 'ag2', nome: 'Qualificador de Leads', icon: 'ti-filter-check', cor: '#8b5cf6', ativo: false, papel: 'vendas', desc: 'Identifica intenção de compra e prioriza as conversas mais quentes.', tom: 'Consultivo', modelo: 'Claude Haiku', gatilho: 'Nova conversa', gemini: { apiKey: '', model: 'gemini-2.0-flash' }, canais: [] },
-      { id: 'ag3', nome: 'Cobrança Amigável', icon: 'ti-cash', cor: '#f59e0b', ativo: false, papel: 'financeiro', desc: 'Envia lembretes de pagamento e negocia prazos de forma educada.', tom: 'Firme e cordial', modelo: 'Claude Haiku', gatilho: 'Fatura vencida', gemini: { apiKey: '', model: 'gemini-2.0-flash' }, canais: [] },
-      { id: 'ag4', nome: 'FAQ Financeiro', icon: 'ti-help-circle', cor: '#10b981', ativo: true, papel: 'suporte', desc: 'Responde perguntas frequentes sobre pedidos, prazos, produtos e preços.', tom: 'Didático', modelo: 'Claude Haiku', gatilho: 'Palavra-chave', gemini: { apiKey: '', model: 'gemini-2.0-flash' }, canais: [] },
+      { id: 'ag1', nome: 'Atendente Virtual', icon: 'ti-headset', cor: '#3b82f6', ativo: true, papel: 'atendimento', desc: 'Responde dúvidas de clientes automaticamente com base no histórico da conversa.', tom: 'Cordial e objetivo', modelo: 'Claude Haiku', gatilho: 'Mensagem recebida', gemini: { apiKey: '', model: 'gemini-flash-latest' }, canais: [] },
+      { id: 'ag2', nome: 'Qualificador de Leads', icon: 'ti-filter-check', cor: '#8b5cf6', ativo: false, papel: 'vendas', desc: 'Identifica intenção de compra e prioriza as conversas mais quentes.', tom: 'Consultivo', modelo: 'Claude Haiku', gatilho: 'Nova conversa', gemini: { apiKey: '', model: 'gemini-flash-latest' }, canais: [] },
+      { id: 'ag3', nome: 'Cobrança Amigável', icon: 'ti-cash', cor: '#f59e0b', ativo: false, papel: 'financeiro', desc: 'Envia lembretes de pagamento e negocia prazos de forma educada.', tom: 'Firme e cordial', modelo: 'Claude Haiku', gatilho: 'Fatura vencida', gemini: { apiKey: '', model: 'gemini-flash-latest' }, canais: [] },
+      { id: 'ag4', nome: 'FAQ Financeiro', icon: 'ti-help-circle', cor: '#10b981', ativo: true, papel: 'suporte', desc: 'Responde perguntas frequentes sobre pedidos, prazos, produtos e preços.', tom: 'Didático', modelo: 'Claude Haiku', gatilho: 'Palavra-chave', gemini: { apiKey: '', model: 'gemini-flash-latest' }, canais: [] },
     ];
     const defConversas = [];
     const DEMO_IDS = ['cv1', 'cv2', 'cv3'];
@@ -3185,7 +3185,7 @@ class Component extends DCLogic {
     // remove conversas de demonstração salvas anteriormente
     const savedConversas = (saved && saved.conversas || []).filter(c => DEMO_IDS.indexOf(c.id) < 0 && c.nome !== 'Bruno Antony' && c.nome !== 'Vitor Gus' && c.nome !== 'Salão Maria Flor');
     this.setState({
-      agentes: ((saved && saved.agentes) || defAgentes).map(a => { a = Object.assign({}, a); a.gemini = Object.assign({ apiKey: '', model: 'gemini-2.0-flash' }, a.gemini || {}); if (/gemini-1\.5/.test(a.gemini.model || '')) a.gemini.model = 'gemini-2.0-flash'; if (/gemini-1\.5/.test(a.forcarModelo || '')) a.forcarModelo = ''; return a; }),
+      agentes: ((saved && saved.agentes) || defAgentes).map(a => { a = Object.assign({}, a); a.gemini = Object.assign({ apiKey: '', model: 'gemini-flash-latest' }, a.gemini || {}); if (/gemini-(1\.5|2\.0)/.test(a.gemini.model || '')) a.gemini.model = 'gemini-flash-latest'; if (/gemini-1\.5/.test(a.forcarModelo || '')) a.forcarModelo = ''; return a; }),
       conversas: savedConversas,
       canais: (saved && saved.canais) || defCanais,
       wppStatus: savedWpp ? 'conectado' : 'desconectado',
@@ -3455,7 +3455,7 @@ class Component extends DCLogic {
       conhecimento: a.conhecimento || '',
     }, a, {
       promptSistema: prompt.trim(),
-      gemini: (function (g) { g = Object.assign({ apiKey: '', model: 'gemini-2.0-flash' }, g || {}); if (/gemini-1\.5/.test(g.model || '')) g.model = 'gemini-2.0-flash'; return g; })(a.gemini),
+      gemini: (function (g) { g = Object.assign({ apiKey: '', model: 'gemini-flash-latest' }, g || {}); if (/gemini-(1\.5|2\.0)/.test(g.model || '')) g.model = 'gemini-flash-latest'; return g; })(a.gemini),
       forcarModelo: (/gemini-1\.5/.test(a.forcarModelo || '') ? '' : (a.forcarModelo || '')),
       canais: (a.canais || []).slice(),
     });
@@ -3477,14 +3477,14 @@ class Component extends DCLogic {
     try {
       const out = await this.geminiComplete(f, 'Responda apenas: OK', 'Teste de conexão. Responda apenas: OK');
       if ((out || '').trim()) this.setState({ agentTestando: false, agentTestResult: 'Conexão OK! O Gemini respondeu. O agente está pronto para responder.', agentTestOk: true });
-      else this.setState({ agentTestando: false, agentTestResult: 'O modelo respondeu vazio. Tente outro modelo (gemini-2.0-flash).', agentTestOk: false });
+      else this.setState({ agentTestando: false, agentTestResult: 'O modelo respondeu vazio. Tente outro modelo (gemini-2.5-flash).', agentTestOk: false });
     } catch (e) {
       const m = String((e && e.message) || e);
       let dica = '';
-      if (/quota|free_tier|rate.?limit|limit:\s*0|exceeded/i.test(m)) dica = ' → Sua conta não tem cota para este modelo (o gemini-2.5-pro exige plano pago). Troque o Modelo para gemini-2.0-flash (gratuito) e salve.';
+      if (/quota|free_tier|rate.?limit|limit:\s*0|exceeded/i.test(m)) dica = ' → Sua conta não tem cota para este modelo (o gemini-2.5-pro exige plano pago). Troque o Modelo para gemini-flash-latest ou gemini-2.5-flash (gratuito) e salve.';
       else if (/API key not valid|API_KEY_INVALID|invalid/i.test(m)) dica = ' → A chave Gemini está inválida. Gere uma nova em aistudio.google.com/apikey.';
       else if (/referer|referrer|blocked|forbidden|403/i.test(m)) dica = ' → A chave tem restrição de site (referrer). Crie uma chave SEM restrição de referrer.';
-      else if (/not found|404|model/i.test(m)) dica = ' → Modelo incorreto. Use gemini-2.0-flash.';
+      else if (/not found|404|model/i.test(m)) dica = ' → Modelo incorreto. Use gemini-flash-latest ou gemini-2.5-flash.';
       else if (/Failed to fetch|NetworkError|CORS|load failed/i.test(m)) dica = ' → Bloqueio de rede/CORS.';
       this.setState({ agentTestando: false, agentTestResult: 'Falhou: ' + m + dica, agentTestOk: false });
     }
@@ -3496,7 +3496,7 @@ class Component extends DCLogic {
       promptSistema: 'Você é um assistente de atendimento da empresa Versatil (gestão para salões e comércio). Seja cordial, objetivo e prestativo. Responda dúvidas sobre produtos, pedidos, prazos e preços. Se não souber, ofereça encaminhar para um atendente humano.',
       tom: 'Cordial e objetivo', boasVindas: 'Olá {user-name}! 👋 Como posso ajudar você hoje?',
       temperatura: 0.5, forcarModelo: '', ativo: true,
-      gemini: Object.assign({ apiKey: '', model: 'gemini-2.0-flash' }, s.form.gemini || {}, { model: 'gemini-2.0-flash' }),
+      gemini: Object.assign({ apiKey: '', model: 'gemini-flash-latest' }, s.form.gemini || {}, { model: 'gemini-flash-latest' }),
     }), agentTestResult: '', agentTab: 'personalidade' }), () => this.toast('success', 'Configurações restauradas ao padrão. Revise e clique em Salvar.'));
   }
   setAgentTab(t) { this.setState({ agentTab: t }); }
@@ -3511,7 +3511,7 @@ class Component extends DCLogic {
   recommendedModel() {
     const f = this.state.form || {}; const p = (f.promptSistema || '').length; const tools = Object.values(f.ferramentas || {}).filter(Boolean).length;
     if (p > 4000 || tools >= 3) return { nome: 'gemini-2.5-flash', motivo: 'Prompt extenso ou muitas ferramentas — modelo avançado (gratuito) recomendado.' };
-    return { nome: 'gemini-2.0-flash', motivo: 'Prompt objetivo — modelo rápido e econômico é suficiente.' };
+    return { nome: 'gemini-flash-latest', motivo: 'Prompt objetivo — modelo rápido e econômico é suficiente.' };
   }
   toggleAgenteCanal(id) { this.setState(s => { const cur = s.form.canais || []; const has = cur.indexOf(id) >= 0; return { form: Object.assign({}, s.form, { canais: has ? cur.filter(x => x !== id) : [...cur, id] }) }; }); }
   saveAgente() {
@@ -3786,7 +3786,7 @@ class Component extends DCLogic {
     try {
       await this.uaFetch(base, '/chatbot/settings', 'PUT', u.instanceToken, {
         enabled: true, aiProvider: 'google', apiKey: gk,
-        model: (agent.forcarModelo || (agent.gemini && agent.gemini.model)) || 'gemini-2.0-flash', systemPrompt: prompt,
+        model: (agent.forcarModelo || (agent.gemini && agent.gemini.model)) || 'gemini-flash-latest', systemPrompt: prompt,
         temperature: (agent.temperatura != null ? agent.temperatura : 0.5),
         welcomeMessage: agent.boasVindas || '',
         stopBotKeyword: '#humano', inactivityTimeout: 1800,
@@ -3832,7 +3832,7 @@ class Component extends DCLogic {
   }
   async geminiComplete(agent, system, userMsg) {
     const key = (agent.gemini && agent.gemini.apiKey || '').trim();
-    const model = (agent.forcarModelo || (agent.gemini && agent.gemini.model)) || 'gemini-2.0-flash';
+    const model = (agent.forcarModelo || (agent.gemini && agent.gemini.model)) || 'gemini-flash-latest';
     const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + encodeURIComponent(key);
     const payload = {
       systemInstruction: { parts: [{ text: system }] },
@@ -4244,7 +4244,7 @@ class Component extends DCLogic {
       wppQrImgEl: S.wppQrImg ? React.createElement('img', { src: S.wppQrImg, alt: 'QR Code', style: { width: '100%', height: '100%', objectFit: 'contain' } }) : null,
       startWppConnect: () => this.startWppConnect(), finishWpp: () => this.finishWpp(),
       wppRepublish: () => this.publishChannel(this._wppCanal, false),
-      geminiModelOptions: ['gemini-2.0-flash', 'gemini-2.5-flash', 'gemini-2.5-pro'],
+      geminiModelOptions: ['gemini-flash-latest', 'gemini-2.5-flash', 'gemini-2.5-pro'],
       canalTipoOptions: ['WhatsApp', 'Instagram', 'Telegram', 'Facebook Messenger', 'E-mail', 'Chat do site'],
       form: S.form, onFormChange: this.onFormChange, onItemChange: this.onItemChange, addItemLinha: this.addItemLinha, removeItemLinha: this.removeItemLinha,
       closeModal: () => this.closeModal(), saveModal: () => this.saveModal(),
@@ -4774,7 +4774,7 @@ class Component extends DCLogic {
           iconWrap: { width: '38px', height: '38px', borderRadius: '9px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '19px', background: c.cor, color: '#fff' },
           checkStyle: { marginLeft: 'auto', width: '24px', height: '24px', borderRadius: '7px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', border: linked ? 'none' : '2px solid var(--color-border-tertiary)', background: linked ? '#1a2b42' : 'transparent', color: '#fff' } };
       });
-      vm.aeGeminiModelOptions = ['gemini-2.0-flash', 'gemini-2.5-flash', 'gemini-2.5-pro'];
+      vm.aeGeminiModelOptions = ['gemini-flash-latest', 'gemini-2.5-flash', 'gemini-2.5-pro'];
       const via = f.respostaVia || 'navegador';
       const segOn = { display: 'inline-flex', alignItems: 'center', gap: '7px', border: 'none', cursor: 'pointer', borderRadius: '9px', padding: '10px 15px', fontWeight: 600, fontSize: '13.5px', background: '#1a2b42', color: '#fff' };
       const segOff = { display: 'inline-flex', alignItems: 'center', gap: '7px', border: '1px solid var(--color-border-tertiary)', cursor: 'pointer', borderRadius: '9px', padding: '10px 15px', fontWeight: 600, fontSize: '13.5px', background: 'var(--color-background-secondary)', color: 'var(--color-text-secondary)' };
