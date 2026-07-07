@@ -1715,6 +1715,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #3b82f6;outline-offset
 @keyframes toastIn{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:none;}}
 @keyframes modalIn{from{opacity:0;transform:translateY(12px) scale(.99);}to{opacity:1;transform:none;}}
 @keyframes spin{to{transform:rotate(360deg);}}
+.msg-row:hover .msg-actions{opacity:1 !important;}
 </style>
 </helmet>
 
@@ -1768,7 +1769,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #3b82f6;outline-offset
 
   <!-- ============ MAIN ============ -->
   <main style="flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;">
-    <header style="display: flex; align-items: center; justify-content: space-between; padding: 20px 32px; background: linear-gradient(180deg, #005f0c, #000000); border-bottom: 1px solid var(--color-border-tertiary); flex-shrink: 0">
+    <header style="display: flex; align-items: center; justify-content: space-between; padding: 20px 32px; background: linear-gradient(180deg, #005f0c, #000000); border-bottom: 1px solid var(--color-border-tertiary); flex-shrink: 0; width: 1320px; height: 68px">
       <div>
         <h1 style="margin:0;font-size:21px;font-weight:700;letter-spacing:-.3px;">{{ pageTitle }}</h1>
         <p style="margin:3px 0 0;font-size:13px;color:var(--color-text-secondary);">{{ pageSubtitle }}</p>
@@ -2245,7 +2246,8 @@ input:focus,select:focus,textarea:focus{outline:2px solid #3b82f6;outline-offset
                     <div style="font-size:12.5px;color:var(--color-text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px;">{{ c.preview }}</div>
                     <div style="display:flex;align-items:center;gap:6px;margin-top:8px;">
                       <sc-if value="{{ c.iaBadge }}" hint-placeholder-val="{{ true }}"><span style="{{ c.iaBadgeStyle }}"><i class="ti ti-robot" style="font-size:12px;"></i>IA</span></sc-if>
-                      <span style="{{ c.setorBadgeStyle }}"><i class="ti ti-user" style="font-size:12px;"></i>{{ c.setor }}</span>
+                      <sc-if value="{{ c.humanoBadge }}" hint-placeholder-val="{{ false }}"><span style="{{ c.humanoBadgeStyle }}"><i class="ti ti-headset" style="font-size:12px;"></i>Atendente</span></sc-if>
+                      <sc-if value="{{ c.setor }}" hint-placeholder-val="{{ false }}"><span style="{{ c.setorBadgeStyle }}"><i class="ti ti-tag" style="font-size:12px;"></i>{{ c.setor }}</span></sc-if>
                       <sc-if value="{{ c.unread }}" hint-placeholder-val="{{ false }}"><span style="{{ c.unreadStyle }}">{{ c.unread }}</span></sc-if>
                     </div>
                   </div>
@@ -2337,10 +2339,38 @@ input:focus,select:focus,textarea:focus{outline:2px solid #3b82f6;outline-offset
                   </sc-if>
                 </div>
                 <sc-if value="{{ inputEnabled }}" hint-placeholder-val="{{ false }}">
-                  <div style="padding:14px 18px;border-top:1px solid var(--color-border-tertiary);flex-shrink:0;display:flex;gap:10px;align-items:flex-end;">
-                    <button onClick="{{ aiRespond }}" disabled="{{ aiBtnDisabled }}" style="{{ aiBtnStyle }}" title="Gerar resposta com IA"><i class="ti ti-sparkles" style="font-size:18px;"></i></button>
-                    <textarea value="{{ chatDraft }}" onInput="{{ onChatDraft }}" onKeyDown="{{ onChatKey }}" rows="1" placeholder="Escreva uma mensagem…" style="flex:1;padding:11px 14px;border:1px solid var(--color-border-tertiary);border-radius:11px;background:var(--color-background-secondary);resize:none;max-height:120px;font-size:14px;"></textarea>
-                    <button onClick="{{ sendChat }}" style="background:#1a2b42;color:#fff;border:none;border-radius:11px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;"><i class="ti ti-send" style="font-size:19px;"></i></button>
+                  <div style="border-top:1px solid var(--color-border-tertiary);flex-shrink:0;background:var(--color-background-primary);">
+                    <sc-if value="{{ hasReply }}" hint-placeholder-val="{{ false }}">
+                      <div style="display:flex;align-items:center;gap:10px;padding:10px 18px 0;">
+                        <div style="flex:1;min-width:0;background:var(--color-background-secondary);border-left:3px solid #16a34a;border-radius:7px;padding:7px 11px;">
+                          <div style="font-size:12px;font-weight:700;color:#16a34a;">Respondendo a {{ replyAutor }}</div>
+                          <div style="font-size:12.5px;color:var(--color-text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ replyText }}</div>
+                        </div>
+                        <button onClick="{{ onCancelReply }}" title="Cancelar" style="background:none;border:none;cursor:pointer;color:var(--color-text-secondary);padding:4px;flex-shrink:0;"><i class="ti ti-x" style="font-size:18px;"></i></button>
+                      </div>
+                    </sc-if>
+                    <sc-if value="{{ emojiOpen }}" hint-placeholder-val="{{ false }}">
+                      <div style="display:flex;flex-wrap:wrap;gap:3px;padding:10px 16px;max-height:140px;overflow-y:auto;border-bottom:1px solid var(--color-border-tertiary);">
+                        <sc-for list="{{ emojis }}" as="em" hint-placeholder-count="20">
+                          <button onClick="{{ em.onClick }}" style="background:none;border:none;cursor:pointer;font-size:21px;padding:3px 5px;line-height:1;border-radius:7px;">{{ em.e }}</button>
+                        </sc-for>
+                      </div>
+                    </sc-if>
+                    <div style="padding:12px 18px;display:flex;gap:9px;align-items:flex-end;position:relative;">
+                      <sc-if value="{{ attachMenuOpen }}" hint-placeholder-val="{{ false }}">
+                        <div style="position:absolute;left:16px;bottom:60px;background:var(--color-background-primary);border:1px solid var(--color-border-tertiary);border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.18);padding:6px;display:flex;flex-direction:column;gap:2px;z-index:20;min-width:170px;">
+                          <button onClick="{{ onPickImage }}" style="display:flex;align-items:center;gap:10px;background:none;border:none;cursor:pointer;padding:10px 12px;border-radius:9px;font-size:13.5px;font-weight:600;color:var(--color-text-primary);text-align:left;"><i class="ti ti-photo" style="font-size:18px;color:#3b82f6;"></i>Foto / Imagem</button>
+                          <button onClick="{{ onPickDoc }}" style="display:flex;align-items:center;gap:10px;background:none;border:none;cursor:pointer;padding:10px 12px;border-radius:9px;font-size:13.5px;font-weight:600;color:var(--color-text-primary);text-align:left;"><i class="ti ti-file-text" style="font-size:18px;color:#6d28d9;"></i>Documento</button>
+                          <button onClick="{{ onPickAudio }}" style="display:flex;align-items:center;gap:10px;background:none;border:none;cursor:pointer;padding:10px 12px;border-radius:9px;font-size:13.5px;font-weight:600;color:var(--color-text-primary);text-align:left;"><i class="ti ti-microphone" style="font-size:18px;color:#16a34a;"></i>Áudio</button>
+                        </div>
+                      </sc-if>
+                      <input id="chat-file-input" type="file" onChange="{{ onFileChosen }}" style="display:none;">
+                      <button onClick="{{ onToggleAttach }}" title="Anexar" style="background:var(--color-background-secondary);border:1px solid var(--color-border-tertiary);color:var(--color-text-secondary);border-radius:11px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;"><i class="ti ti-paperclip" style="font-size:19px;"></i></button>
+                      <button onClick="{{ onToggleEmoji }}" title="Emojis" style="background:var(--color-background-secondary);border:1px solid var(--color-border-tertiary);color:var(--color-text-secondary);border-radius:11px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;"><i class="ti ti-mood-smile" style="font-size:19px;"></i></button>
+                      <button onClick="{{ aiRespond }}" disabled="{{ aiBtnDisabled }}" style="{{ aiBtnStyle }}" title="Gerar resposta com IA"><i class="ti ti-sparkles" style="font-size:18px;"></i></button>
+                      <textarea value="{{ chatDraft }}" onInput="{{ onChatDraft }}" onKeyDown="{{ onChatKey }}" rows="1" placeholder="Escreva uma mensagem…" style="flex:1;padding:11px 14px;border:1px solid var(--color-border-tertiary);border-radius:11px;background:var(--color-background-secondary);resize:none;max-height:120px;font-size:14px;"></textarea>
+                      <button onClick="{{ sendChat }}" style="background:#1a2b42;color:#fff;border:none;border-radius:11px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;"><i class="ti ti-send" style="font-size:19px;"></i></button>
+                    </div>
                   </div>
                 </sc-if>
                 <sc-if value="{{ showIaNotice }}" hint-placeholder-val="{{ true }}">
@@ -2381,11 +2411,12 @@ input:focus,select:focus,textarea:focus{outline:2px solid #3b82f6;outline-offset
               <i class="ti ti-search" style="position:absolute;left:13px;font-size:17px;color:var(--color-text-secondary);"></i>
               <input value="{{ agSearch }}" onInput="{{ onAgSearch }}" placeholder="Buscar por nome, telefone ou solicitação…" style="width:100%;padding:11px 14px 11px 40px;border:1px solid var(--color-border-tertiary);border-radius:10px;background:var(--color-background-primary);font-size:14px;">
             </div>
+            <button onClick="{{ onGcalConfig }}" title="Configurar sincronização com Google Agenda" style="{{ gcalStatusStyle }}"><i class="ti ti-brand-google" style="font-size:16px;"></i>{{ gcalStatusText }}</button>
             <button onClick="{{ onNovoAgendamento }}" style="display:inline-flex;align-items:center;gap:7px;background:#16a34a;color:#fff;border:none;border-radius:10px;padding:11px 18px;font-weight:600;font-size:14px;cursor:pointer;flex-shrink:0;"><i class="ti ti-calendar-plus" style="font-size:18px;"></i>Novo agendamento</button>
           </div>
           <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;">
             <sc-for list="{{ agendamentosList }}" as="a" hint-placeholder-count="3">
-              <div style="background:var(--color-background-primary);border:1px solid var(--color-border-tertiary);border-radius:var(--radius);padding:18px;display:flex;flex-direction:column;gap:12px;">
+              <div style="{{ a.cardStyle }}">
                 <div style="display:flex;align-items:center;gap:12px;">
                   <div style="width:46px;height:46px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;background:var(--color-background-tertiary);color:var(--color-text-secondary);">{{ a.initials }}</div>
                   <div style="flex:1;min-width:0;">
@@ -2394,11 +2425,18 @@ input:focus,select:focus,textarea:focus{outline:2px solid #3b82f6;outline-offset
                   </div>
                   <span style="{{ a.origemStyle }}"><i class="ti {{ a.origemIcon }}" style="font-size:13px;"></i>{{ a.origem }}</span>
                 </div>
-                <div style="display:flex;align-items:center;gap:7px;font-size:13.5px;font-weight:700;color:#16a34a;"><i class="ti ti-clock" style="font-size:16px;"></i>{{ a.quando }}</div>
+                <sc-if value="{{ a.statusLabel }}" hint-placeholder-val="{{ false }}">
+                  <span style="{{ a.statusBadgeStyle }}"><i class="ti {{ a.statusIcon }}" style="font-size:14px;"></i>{{ a.statusLabel }}</span>
+                </sc-if>
+                <div style="{{ a.quandoStyle }}"><i class="ti ti-clock" style="font-size:16px;"></i>{{ a.quando }}</div>
+                <sc-if value="{{ a.temMotivo }}" hint-placeholder-val="{{ false }}">
+                  <div style="{{ a.motivoStyle }}"><i class="ti ti-info-circle" style="font-size:16px;flex-shrink:0;"></i><span><strong>Motivo:</strong> {{ a.motivo }}</span></div>
+                </sc-if>
                 <div style="font-size:13px;color:var(--color-text-secondary);line-height:1.55;background:var(--color-background-secondary);border-radius:9px;padding:11px 13px;">{{ a.resumo }}</div>
                 <div style="display:flex;gap:9px;">
+                  <button onClick="{{ a.onGoogleCal }}" style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;background:#1a73e8;color:#fff;border:none;border-radius:9px;padding:9px;font-size:13px;font-weight:600;cursor:pointer;"><i class="ti ti-brand-google" style="font-size:15px;"></i>Google Agenda</button>
                   <sc-if value="{{ a.temConv }}" hint-placeholder-val="{{ false }}">
-                    <button onClick="{{ a.onOpen }}" style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;background:var(--color-background-secondary);border:1px solid var(--color-border-tertiary);border-radius:9px;padding:9px;font-size:13px;font-weight:600;color:var(--color-text-primary);cursor:pointer;"><i class="ti ti-message" style="font-size:15px;"></i>Ver conversa</button>
+                    <button onClick="{{ a.onOpen }}" title="Ver conversa" style="display:inline-flex;align-items:center;justify-content:center;background:var(--color-background-secondary);border:1px solid var(--color-border-tertiary);border-radius:9px;padding:9px 13px;font-weight:600;color:var(--color-text-primary);cursor:pointer;"><i class="ti ti-message" style="font-size:16px;"></i></button>
                   </sc-if>
                   <button onClick="{{ a.onRemove }}" title="Remover agendamento" style="display:inline-flex;align-items:center;justify-content:center;background:var(--color-background-secondary);border:1px solid var(--color-border-tertiary);border-radius:9px;padding:9px 13px;color:#ef4444;cursor:pointer;"><i class="ti ti-trash" style="font-size:16px;"></i></button>
                 </div>
@@ -2630,7 +2668,9 @@ input:focus,select:focus,textarea:focus{outline:2px solid #3b82f6;outline-offset
               <div style="display:flex;flex-direction:column;gap:22px;">
                 <div><h2 style="margin:0;font-size:20px;font-weight:700;">Regras</h2><p style="margin:4px 0 0;font-size:14px;color:var(--color-text-secondary);">Diretrizes e limites que o agente deve sempre seguir.</p></div>
                 <label style="display:flex;flex-direction:column;gap:7px;font-size:13.5px;font-weight:600;color:var(--color-text-secondary);">Regras de negócio
-                  <textarea name="regras" value="{{ aeForm.regras }}" onInput="{{ onAgentField }}" rows="8" placeholder="- Nunca informe preços sem confirmar estoque&#10;- Sempre ofereça o parcelamento em 3x&#10;- Encaminhe reclamações para um humano" style="padding:14px 15px;border:1px solid var(--color-border-tertiary);border-radius:11px;background:var(--color-background-primary);resize:vertical;font-size:14px;line-height:1.55;font-family:inherit;"></textarea>
+                  <textarea name="regras" value="{{ aeForm.regras }}" onInput="{{ onAgentField }}" rows="8" placeholder="- Nunca informe preços sem confirmar estoque
+- Sempre ofereça o parcelamento em 3x
+- Encaminhe reclamações para um humano" style="padding:14px 15px;border:1px solid var(--color-border-tertiary);border-radius:11px;background:var(--color-background-primary);resize:vertical;font-size:14px;line-height:1.55;font-family:inherit;"></textarea>
                 </label>
                 <div style="display:flex;align-items:flex-start;gap:9px;background:var(--color-background-warning);color:var(--color-text-warning);border-radius:10px;padding:12px 14px;font-size:12.5px;line-height:1.45;"><i class="ti ti-bulb" style="font-size:16px;flex-shrink:0;"></i>Estas regras são anexadas ao prompt de sistema ao publicar o agente.</div>
               </div>
@@ -2692,11 +2732,26 @@ input:focus,select:focus,textarea:focus{outline:2px solid #3b82f6;outline-offset
             <!-- CONHECIMENTO -->
             <sc-if value="{{ aeIsConhec }}" hint-placeholder-val="{{ false }}">
               <div style="display:flex;flex-direction:column;gap:22px;">
-                <div><h2 style="margin:0;font-size:20px;font-weight:700;">Conhecimento</h2><p style="margin:4px 0 0;font-size:14px;color:var(--color-text-secondary);">Base de informações que o agente usa para responder.</p></div>
+                <div><h2 style="margin:0;font-size:20px;font-weight:700;">Conhecimento</h2><p style="margin:4px 0 0;font-size:14px;color:var(--color-text-secondary);">Informações da empresa e produtos que o agente usa como fonte de verdade nos atendimentos.</p></div>
+                <div style="display:flex;align-items:flex-start;gap:11px;background:var(--color-background-info);color:var(--color-text-info);border-radius:11px;padding:13px 15px;font-size:13px;line-height:1.5;"><i class="ti ti-book" style="font-size:19px;flex-shrink:0;"></i>Tudo o que estiver aqui é injetado no prompt do agente. Ele responderá com base nestas informações e evitará inventar dados que não estejam listados.</div>
+                <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                  <span style="font-size:12px;color:var(--color-text-secondary);align-self:center;">Preencher com:</span>
+                  <button onClick="{{ onFillProdutos }}" style="display:inline-flex;align-items:center;gap:6px;background:var(--color-background-tertiary);border:1px solid var(--color-border-tertiary);border-radius:8px;padding:6px 11px;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--color-text-primary);"><i class="ti ti-packages" style="font-size:15px;"></i>Catálogo do estoque</button>
+                </div>
                 <label style="display:flex;flex-direction:column;gap:7px;font-size:13.5px;font-weight:600;color:var(--color-text-secondary);">Base de conhecimento (texto)
-                  <textarea name="conhecimento" value="{{ aeForm.conhecimento }}" onInput="{{ onAgentField }}" rows="9" placeholder="Cole aqui informações da empresa: horários, políticas, catálogo, FAQ…" style="padding:14px 15px;border:1px solid var(--color-border-tertiary);border-radius:11px;background:var(--color-background-primary);resize:vertical;font-size:14px;line-height:1.55;font-family:inherit;"></textarea>
+                  <textarea name="conhecimento" value="{{ aeForm.conhecimento }}" onInput="{{ onAgentField }}" rows="12" placeholder="Ex.:
+EMPRESA: Versatil — distribuidora de produtos para salões.
+HORÁRIO: Seg a Sex 8h-18h, Sáb 8h-12h.
+ENTREGA: Cascavel e região em 2-3 dias úteis.
+PAGAMENTO: Pix, boleto, cartão em até 3x.
+
+PRODUTOS:
+- Tesoura Profissional — R$ 189,90
+- Secador Turbo — R$ 249,00
+
+POLÍTICAS: trocas em até 7 dias com nota." style="padding:14px 15px;border:1px solid var(--color-border-tertiary);border-radius:11px;background:var(--color-background-primary);resize:vertical;font-size:14px;line-height:1.55;font-family:inherit;"></textarea>
+                  <span style="font-size:12px;color:var(--color-text-secondary);">{{ conhecimentoLen }} caracteres</span>
                 </label>
-                <div style="display:flex;align-items:center;gap:12px;border:2px dashed var(--color-border-tertiary);border-radius:12px;padding:22px;justify-content:center;color:var(--color-text-secondary);font-size:13px;"><i class="ti ti-upload" style="font-size:20px;"></i>Arraste arquivos (PDF, TXT) para adicionar à base — em breve</div>
               </div>
             </sc-if>
 
@@ -2969,6 +3024,23 @@ input:focus,select:focus,textarea:focus{outline:2px solid #3b82f6;outline-offset
             </div>
           </sc-if>
 
+          <!-- CONFIG GOOGLE AGENDA -->
+          <sc-if value="{{ m_gcal }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:16px;">
+              <div style="display:flex;align-items:flex-start;gap:11px;background:var(--color-background-info);color:var(--color-text-info);border-radius:11px;padding:13px 15px;font-size:13px;line-height:1.5;"><i class="ti ti-brand-google" style="font-size:19px;flex-shrink:0;"></i>Cole a URL do seu backend de sincronização (endpoint <strong>/api/gcal</strong>). Depois disso, todo agendamento entra sozinho na sua Google Agenda. Veja o guia em webhook/GOOGLE_CALENDAR.md.</div>
+              <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--color-text-secondary);">URL do endpoint
+                <input name="gcalUrl" value="{{ form.gcalUrl }}" onInput="{{ onFormChange }}" placeholder="https://seu-backend.vercel.app/api/gcal" style="padding:11px 13px;border:1px solid var(--color-border-tertiary);border-radius:9px;background:var(--color-background-primary);">
+              </label>
+              <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--color-text-secondary);">Segredo (opcional)
+                <input name="gcalSecret" value="{{ form.gcalSecret }}" onInput="{{ onFormChange }}" placeholder="igual ao SYNC_SECRET do backend" style="padding:11px 13px;border:1px solid var(--color-border-tertiary);border-radius:9px;background:var(--color-background-primary);">
+              </label>
+              <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:2px;">
+                <button onClick="{{ closeModal }}" style="background:var(--color-background-tertiary);color:var(--color-text-primary);border:none;border-radius:10px;padding:11px 20px;font-weight:600;font-size:14px;cursor:pointer;">Cancelar</button>
+                <button onClick="{{ saveModal }}" style="background:#1a73e8;color:#fff;border:none;border-radius:10px;padding:11px 22px;font-weight:600;font-size:14px;cursor:pointer;">Salvar</button>
+              </div>
+            </div>
+          </sc-if>
+
           <!-- NOVO AGENDAMENTO -->
           <sc-if value="{{ m_agendamento }}" hint-placeholder-val="{{ false }}">
             <div style="display:flex;flex-direction:column;gap:16px;">
@@ -2980,9 +3052,14 @@ input:focus,select:focus,textarea:focus{outline:2px solid #3b82f6;outline-offset
                   <input name="telefone" value="{{ form.telefone }}" onInput="{{ onFormChange }}" placeholder="+55..." style="padding:11px 13px;border:1px solid var(--color-border-tertiary);border-radius:9px;background:var(--color-background-primary);">
                 </label>
               </div>
-              <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--color-text-secondary);">Data / horário
-                <input name="quando" value="{{ form.quando }}" onInput="{{ onFormChange }}" placeholder="ex: 12/07 às 14h" style="padding:11px 13px;border:1px solid var(--color-border-tertiary);border-radius:9px;background:var(--color-background-primary);">
-              </label>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--color-text-secondary);">Data
+                  <input name="data" type="date" value="{{ form.data }}" onInput="{{ onFormChange }}" style="padding:11px 13px;border:1px solid var(--color-border-tertiary);border-radius:9px;background:var(--color-background-primary);">
+                </label>
+                <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--color-text-secondary);">Hora
+                  <input name="hora" type="time" value="{{ form.hora }}" onInput="{{ onFormChange }}" style="padding:11px 13px;border:1px solid var(--color-border-tertiary);border-radius:9px;background:var(--color-background-primary);">
+                </label>
+              </div>
               <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--color-text-secondary);">Resumo / solicitações
                 <textarea name="resumo" value="{{ form.resumo }}" onInput="{{ onFormChange }}" rows="3" placeholder="Resumo da conversa e o que o cliente solicitou" style="padding:11px 13px;border:1px solid var(--color-border-tertiary);border-radius:9px;background:var(--color-background-primary);resize:vertical;"></textarea>
               </label>
@@ -3255,29 +3332,81 @@ class Component extends DCLogic {
       agentes: ((saved && saved.agentes) || defAgentes).map(a => { a = Object.assign({}, a); a.gemini = Object.assign({ apiKey: '', model: 'gemini-flash-latest' }, a.gemini || {}); if (/gemini-(1\.5|2\.0)/.test(a.gemini.model || '')) a.gemini.model = 'gemini-flash-latest'; if (/gemini-1\.5/.test(a.forcarModelo || '')) a.forcarModelo = ''; return a; }),
       conversas: savedConversas,
       agendamentos: (saved && saved.agendamentos) || [],
+      gcalUrl: (saved && saved.gcalUrl) || '',
+      gcalSecret: (saved && saved.gcalSecret) || '',
       canais: (saved && saved.canais) || defCanais,
       wppStatus: savedWpp ? 'conectado' : 'desconectado',
       activeConv: null,
     }, () => { this.persistCA(); if (this.wppConnectedChannel()) this.syncWppConversas(true); });
   }
-  persistCA = () => { try { localStorage.setItem('versatil_ca', JSON.stringify({ conversas: this.state.conversas, agentes: this.state.agentes, canais: this.state.canais, agendamentos: this.state.agendamentos })); } catch (e) {} };
+  persistCA = () => { try { localStorage.setItem('versatil_ca', JSON.stringify({ conversas: this.state.conversas, agentes: this.state.agentes, canais: this.state.canais, agendamentos: this.state.agendamentos, gcalUrl: this.state.gcalUrl, gcalSecret: this.state.gcalSecret })); } catch (e) {} };
   // ---- agendamentos ----
   addAgendamento(ag) {
     const item = Object.assign({ id: 'ag' + Date.now() + Math.floor(Math.random() * 999), criadoEm: Date.now(), origem: 'IA' }, ag);
-    this.setState(s => ({ agendamentos: [item, ...(s.agendamentos || [])] }), () => { this.persistCA(); this.toast('success', 'Agendamento registrado: ' + (item.nome || 'cliente')); });
+    this.setState(s => ({ agendamentos: [item, ...(s.agendamentos || [])] }), () => { this.persistCA(); this.toast('success', 'Agendamento registrado: ' + (item.nome || 'cliente')); this.syncGoogleCal(item); });
     return item;
   }
   removeAgendamento(id) { this.setState(s => ({ agendamentos: (s.agendamentos || []).filter(a => a.id !== id) }), () => { this.persistCA(); this.toast('info', 'Agendamento removido'); }); }
+  // ---- Google Calendar (sincronização automática via backend) ----
+  openGcalConfig() { this.setState({ modal: 'gcal_config', form: { gcalUrl: this.state.gcalUrl || '', gcalSecret: this.state.gcalSecret || '' } }); }
+  saveGcalConfig() {
+    const f = this.state.form;
+    this.setState({ gcalUrl: (f.gcalUrl || '').trim(), gcalSecret: (f.gcalSecret || '').trim(), modal: null, form: {} }, () => { this.persistCA(); this.toast('success', 'Sincronização com Google Agenda salva'); });
+  }
+  async syncGoogleCal(item, manual) {
+    const url = (this.state.gcalUrl || '').trim();
+    if (!url) { if (manual) this.toast('info', 'Configure a URL de sincronização primeiro (⚙️).'); return; }
+    try {
+      const headers = { 'Content-Type': 'application/json' };
+      if (this.state.gcalSecret) headers['x-sync-secret'] = this.state.gcalSecret;
+      const r = await fetch(url, { method: 'POST', headers: headers, body: JSON.stringify({ nome: item.nome, telefone: item.telefone, resumo: item.resumo, data: item.data || '', hora: item.hora || '' }) });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) { if (manual) this.toast('error', 'Google Agenda: ' + (data.error || r.status)); return; }
+      // marca como sincronizado
+      this.setState(s => ({ agendamentos: (s.agendamentos || []).map(a => a.id === item.id ? Object.assign({}, a, { gcalSynced: true, gcalLink: data.htmlLink || '' }) : a) }), this.persistCA);
+      if (manual) this.toast('success', 'Adicionado à Google Agenda!');
+    } catch (e) { if (manual) this.toast('error', 'Falha ao sincronizar (CORS ou rede).'); }
+  }
   openNovoAgendamento(conv) {
     const c = conv || (this.state.conversas || []).find(x => x.id === this.state.activeConv);
-    this.setState({ convMenuOpen: false, modal: 'novo_agendamento', form: { nome: (c && c.nome) || '', telefone: (c && (c.telefone || this.convPhone(c))) || '', quando: '', resumo: '' } });
+    this.setState({ convMenuOpen: false, modal: 'novo_agendamento', form: { nome: (c && c.nome) || '', telefone: (c && (c.telefone || this.convPhone(c))) || '', data: '', hora: '', quando: '', resumo: '' } });
   }
   saveNovoAgendamento() {
     const f = this.state.form; const nome = (f.nome || '').trim();
     if (!nome) return this.toast('error', 'Informe o nome do cliente');
-    this.addAgendamento({ nome: nome, telefone: (f.telefone || '').trim(), quando: (f.quando || '').trim(), resumo: (f.resumo || '').trim(), origem: 'Manual' });
+    const quando = this.fmtQuando(f.data, f.hora) || (f.quando || '').trim();
+    this.addAgendamento({ nome: nome, telefone: (f.telefone || '').trim(), data: f.data || '', hora: f.hora || '', quando: quando, resumo: (f.resumo || '').trim(), origem: 'Manual' });
     this.setState({ modal: null, form: {}, convTab: 'agendamentos' });
   }
+  fmtQuando(data, hora) {
+    if (!data) return '';
+    try {
+      const [y, m, d] = data.split('-');
+      let s = d + '/' + m + '/' + y;
+      if (hora) s += ' às ' + hora;
+      return s;
+    } catch (e) { return ''; }
+  }
+  // gera link "Adicionar ao Google Agenda" com evento pré-preenchido
+  googleCalUrl(a) {
+    const pad = (n) => String(n).padStart(2, '0');
+    const fmt = (dt) => dt.getFullYear() + pad(dt.getMonth() + 1) + pad(dt.getDate()) + 'T' + pad(dt.getHours()) + pad(dt.getMinutes()) + '00';
+    let start, end;
+    if (a.data) {
+      const [y, m, d] = a.data.split('-').map(Number);
+      const [hh, mm] = (a.hora || '09:00').split(':').map(Number);
+      start = new Date(y, (m || 1) - 1, d || 1, hh || 9, mm || 0);
+      end = new Date(start.getTime() + 60 * 60 * 1000);
+    }
+    const titulo = 'Atendimento — ' + (a.nome || 'Cliente');
+    const detalhes = 'Cliente: ' + (a.nome || '') + '\nTelefone: ' + (a.telefone || '') + '\n\nSolicitações:\n' + (a.resumo || '');
+    let url = 'https://calendar.google.com/calendar/render?action=TEMPLATE'
+      + '&text=' + encodeURIComponent(titulo)
+      + '&details=' + encodeURIComponent(detalhes);
+    if (start && end && !isNaN(start.getTime())) url += '&dates=' + fmt(start) + '/' + fmt(end);
+    return url;
+  }
+  openGoogleCal(a) { try { window.open(this.googleCalUrl(a), '_blank'); } catch (e) { this.toast('error', 'Não foi possível abrir o Google Agenda'); } }
   // extrai agendamento da conversa via IA (best-effort, não bloqueia)
   async iaCheckAgendamento(conv, agent) {
     try {
@@ -3289,18 +3418,33 @@ class Component extends DCLogic {
       if (this._agCheck[conv.id] === conv.msgs.length) return;
       this._agCheck[conv.id] = conv.msgs.length;
       const history = conv.msgs.map(m => (m.from === 'cliente' ? 'Cliente' : 'Empresa') + ': ' + (m.text || ('[' + (m.type || 'mídia') + ']'))).join('\n');
-      const sys = 'Você analisa conversas de atendimento e detecta se um AGENDAMENTO/COMPROMISSO foi marcado (horário para serviço, visita, reunião, corte, etc.). Responda SOMENTE com JSON válido, sem texto extra. Se houve agendamento confirmado, retorne {"agendou":true,"quando":"data/horário em texto","resumo":"resumo curto das solicitações do cliente"}. Se NÃO houve, retorne {"agendou":false}.';
-      const userMsg = 'Conversa:\n' + history + '\n\nHouve um agendamento confirmado?';
+      const jaTem = (this.state.agendamentos || []).find(a => a.convId === conv.id && a.status !== 'cancelado');
+      const sys = 'Você analisa conversas de atendimento e gerencia agendamentos. Já existe um agendamento para esta conversa? ' + (jaTem ? ('SIM — atual: quando="' + (jaTem.quando || '') + '", resumo="' + (jaTem.resumo || '') + '".') : 'NÃO.') + ' Responda SOMENTE com JSON válido, sem texto extra. Detecte a ação do cliente e retorne uma destas formas:\n' +
+        '- Novo agendamento confirmado: {"acao":"criar","quando":"data/horário","resumo":"solicitações do cliente"}\n' +
+        '- Alteração/remarcação de um agendamento existente: {"acao":"alterar","quando":"novo data/horário","motivo":"motivo informado pelo cliente"}\n' +
+        '- Cancelamento solicitado: {"acao":"cancelar","motivo":"motivo informado pelo cliente"}\n' +
+        '- Nada a fazer: {"acao":"nenhuma"}\n' +
+        'Se o cliente pedir para cancelar ou alterar e NÃO informar o motivo, retorne {"acao":"pedir_motivo","tipo":"cancelar" ou "alterar"}.';
+      const userMsg = 'Conversa:\n' + history + '\n\nQual a ação?';
       const raw = await this.geminiComplete(agent, sys, userMsg);
       const jtxt = (raw || '').replace(/```json|```/g, '').trim();
       let parsed = null; try { parsed = JSON.parse(jtxt); } catch (e) { const m = jtxt.match(/\{[\s\S]*\}/); if (m) { try { parsed = JSON.parse(m[0]); } catch (e2) {} } }
-      if (parsed && parsed.agendou) {
-        // não duplica agendamento para a mesma conversa
-        const jaTem = (this.state.agendamentos || []).some(a => a.convId === conv.id);
-        if (jaTem) return;
-        this.addAgendamento({ convId: conv.id, nome: conv.nome, telefone: conv.telefone || this.convPhone(conv), quando: parsed.quando || '', resumo: parsed.resumo || '', origem: 'IA' });
+      if (!parsed || !parsed.acao || parsed.acao === 'nenhuma') return;
+      if (parsed.acao === 'criar') {
+        if (jaTem) return; // não duplica
+        this.addAgendamento({ convId: conv.id, nome: conv.nome, telefone: conv.telefone || this.convPhone(conv), quando: parsed.quando || '', resumo: parsed.resumo || '', origem: 'IA', status: 'ativo' });
+      } else if (parsed.acao === 'alterar' && jaTem) {
+        this.updateAgendamento(jaTem.id, { quando: parsed.quando || jaTem.quando, status: 'alterado', motivo: parsed.motivo || '', alteradoEm: Date.now() });
+        this.toast('info', 'Agendamento de ' + (jaTem.nome || 'cliente') + ' alterado pela IA');
+      } else if (parsed.acao === 'cancelar' && jaTem) {
+        this.updateAgendamento(jaTem.id, { status: 'cancelado', motivo: parsed.motivo || '', canceladoEm: Date.now() });
+        this.toast('info', 'Agendamento de ' + (jaTem.nome || 'cliente') + ' cancelado pela IA');
       }
+      // parsed.acao === 'pedir_motivo' → a própria IA já pergunta o motivo na resposta ao cliente; nada a alterar aqui
     } catch (e) { /* silencioso */ }
+  }
+  updateAgendamento(id, patch) {
+    this.setState(s => ({ agendamentos: (s.agendamentos || []).map(a => a.id === id ? Object.assign({}, a, patch) : a) }), this.persistCA);
   }
   toggleGroup(key) { this.setState(s => { const cur = s.openGroups[key] !== false; return { openGroups: Object.assign({}, s.openGroups, { [key]: !cur }) }; }); }
   setConvTab(t) { this.setState({ convTab: t, activeConv: t === 'contatos' ? null : this.state.activeConv }); }
@@ -3489,16 +3633,20 @@ class Component extends DCLogic {
       const resp = await this.uaFetch(base, '/message/find', 'POST', token, { chatid: conv.chatid, limit: 40, offset: 0 });
       const arr = resp.messages || resp.data || (Array.isArray(resp) ? resp : []) || [];
       const ordered = arr.slice().sort((a, b) => Number(a.messageTimestamp || 0) - Number(b.messageTimestamp || 0));
-      const msgs = ordered.map(m => {
+      const msgs = ordered.map((m, i) => {
         const mt = String(m.messageType || m.mediaType || '').toLowerCase();
         let type = 'text';
         if (/image|sticker/.test(mt)) type = 'image';
         else if (/audio|ptt|voice/.test(mt)) type = 'audio';
         else if (/document|file|pdf/.test(mt)) type = 'document';
         else if (/video/.test(mt)) type = 'video';
-        const texto = m.text || m.content || m.caption || (m.message && (m.message.conversation || (m.message.extendedTextMessage && m.message.extendedTextMessage.text))) || '';
+        let texto = m.text || m.content || m.caption || (m.message && (m.message.conversation || (m.message.extendedTextMessage && m.message.extendedTextMessage.text))) || '';
+        if (texto && typeof texto === 'object') texto = texto.text || texto.caption || texto.body || '';
+        if (typeof texto !== 'string') texto = String(texto == null ? '' : texto);
         const from = m.fromMe ? 'empresa' : 'cliente';
+        const stableId = m.id || m.messageid || m.messageId || (m.key && m.key.id) || ('wm_' + conv.chatid + '_' + i);
         return {
+          id: stableId,
           from: from, type: type === 'video' ? 'document' : type,
           text: texto, time: this.wppTs(m.messageTimestamp),
           fileName: m.fileName || (type === 'document' ? 'documento' : ''),
@@ -3511,23 +3659,80 @@ class Component extends DCLogic {
   }
   onChatDraft = (e) => this.setState({ chatDraft: e.target.value });
   onChatKey = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); this.sendChat(); } };
+  // --- anexos, emojis, reações e resposta (estilo WhatsApp) ---
+  toggleEmoji = () => this.setState(s => ({ emojiOpen: !s.emojiOpen, attachMenuOpen: false }));
+  toggleAttachMenu = () => this.setState(s => ({ attachMenuOpen: !s.attachMenuOpen, emojiOpen: false }));
+  insertEmoji(e) { this.setState(s => ({ chatDraft: (s.chatDraft || '') + e, emojiOpen: false })); }
+  emojiList() { return ['😀','😁','😂','🤣','😊','😍','😘','😉','🙂','😅','🤗','🤔','😎','😴','🙄','😢','😭','😡','👍','👎','👌','🙏','👏','💪','🔥','🎉','❤️','💚','💙','💜','✅','❌','⚠️','💰','📦','🚚','🛒','📅','⏰','📎','📸','🎤','😃']; }
+  reactList() { return ['👍','❤️','😂','😮','😢','🙏']; }
+  startReply(msgId) {
+    const conv = (this.state.conversas || []).find(c => c.id === this.state.activeConv);
+    const m = conv && conv.msgs.find(x => x.id === msgId);
+    if (m) this.setState({ chatReplyTo: { id: m.id, text: m.text || ('[' + (m.type || 'mídia') + ']'), autor: m.from === 'cliente' ? conv.nome : (m.from === 'ia' ? (m.agente || 'IA') : 'Você') }, reactBarFor: null });
+  }
+  cancelReply = () => this.setState({ chatReplyTo: null });
+  toggleReactBar(msgId) { this.setState(s => ({ reactBarFor: s.reactBarFor === msgId ? null : msgId })); }
+  reactMsg(msgId, emoji) {
+    const convId = this.state.activeConv;
+    this.setState(s => ({ reactBarFor: null, conversas: s.conversas.map(c => {
+      if (c.id !== convId) return c;
+      return Object.assign({}, c, { msgs: c.msgs.map(m => {
+        if (m.id !== msgId) return m;
+        const cur = m.reacao === emoji ? null : emoji; // toggle
+        return Object.assign({}, m, { reacao: cur });
+      }) });
+    }) }), this.persistCA);
+  }
+  pickAttachment(kind) {
+    this.setState({ attachMenuOpen: false });
+    const inp = document.getElementById('chat-file-input');
+    if (!inp) return;
+    inp.accept = kind === 'image' ? 'image/*' : (kind === 'audio' ? 'audio/*' : '');
+    inp._kind = kind;
+    inp.value = '';
+    inp.click();
+  }
+  onFileChosen = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const kind = e.target._kind || (/^image\//.test(file.type) ? 'image' : (/^audio\//.test(file.type) ? 'audio' : 'document'));
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result;
+      const type = kind === 'image' ? 'image' : (kind === 'audio' ? 'audio' : 'document');
+      this.sendChat({ type: type, url: dataUrl, fileName: file.name, fileSize: this.humanSize(file.size) });
+    };
+    reader.readAsDataURL(file);
+  };
+  humanSize(b) { if (!b) return ''; const u = ['B','KB','MB','GB']; let i = 0; while (b >= 1024 && i < 3) { b /= 1024; i++; } return b.toFixed(b < 10 && i > 0 ? 1 : 0) + ' ' + u[i]; }
   hhmm() { const d = new Date(); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); }
-  async sendChat() {
+  async sendChat(media) {
     const S = this.state; const txt = (S.chatDraft || '').trim();
-    if (!txt || !S.activeConv) return;
+    if ((!txt && !media) || !S.activeConv) return;
     const convId = S.activeConv;
     const conv = (S.conversas || []).find(c => c.id === convId);
     const now = this.hhmm();
     const msgId = 'm' + Date.now();
+    const replyTo = S.chatReplyTo || null;
+    const baseMsg = { id: msgId, from: 'empresa', text: txt, time: now, sending: true };
+    if (replyTo) baseMsg.replyTo = replyTo;
+    if (media) { baseMsg.type = media.type; baseMsg.url = media.url; baseMsg.fileName = media.fileName; baseMsg.fileSize = media.fileSize; }
     // envio otimista: mostra a mensagem imediatamente com status "enviando"
-    this.setState(s => ({ conversas: s.conversas.map(c => c.id === convId ? Object.assign({}, c, { humano: true, msgs: [...c.msgs, { id: msgId, from: 'empresa', text: txt, time: now, sending: true }] }) : c), chatDraft: '' }), () => { this.persistCA(); this.scrollThreadBottom(true); });
+    this.setState(s => ({ conversas: s.conversas.map(c => c.id === convId ? Object.assign({}, c, { humano: true, iaAtiva: false, msgs: [...c.msgs, baseMsg] }) : c), chatDraft: media ? s.chatDraft : '', chatReplyTo: null, emojiOpen: false, attachMenuOpen: false }), () => { this.persistCA(); this.scrollThreadBottom(true); });
     // se for conversa do WhatsApp e houver canal conectado, envia de verdade
     if (conv && conv.source === 'wpp' && conv.chatid) {
       const ch = this.wppConnectedChannel();
       if (!ch) { this.markMsg(convId, msgId, { sending: false, failed: true }); this.toast('error', 'Canal WhatsApp desconectado.'); return; }
       const base = this.uaBaseFor(ch.uazapi); const token = ch.uazapi.instanceToken;
       try {
-        await this.uaFetch(base, '/send/text', 'POST', token, { number: conv.chatid, text: txt });
+        if (media) {
+          // envia mídia via uazapi (base64 data URL)
+          const b64 = String(media.url).replace(/^data:[^,]+,/, '');
+          const kind = media.type === 'image' ? 'image' : (media.type === 'audio' ? 'audio' : 'document');
+          await this.uaFetch(base, '/send/media', 'POST', token, { number: conv.chatid, type: kind, file: media.url, docName: media.fileName, text: txt });
+        } else {
+          await this.uaFetch(base, '/send/text', 'POST', token, { number: conv.chatid, text: txt });
+        }
         this.markMsg(convId, msgId, { sending: false, sent: true });
       } catch (e) {
         this.markMsg(convId, msgId, { sending: false, failed: true });
@@ -3618,6 +3823,13 @@ class Component extends DCLogic {
   toggleVoz() { this.setState(s => ({ form: Object.assign({}, s.form, { voz: Object.assign({}, s.form.voz, { ativa: !(s.form.voz || {}).ativa }) }) })); }
   onVozField = (e) => { const n = e.target.name, v = e.target.value; this.setState(s => ({ form: Object.assign({}, s.form, { voz: Object.assign({}, s.form.voz || {}, { [n]: v }) }) })); };
   insertPromptVar(v) { this.setState(s => ({ form: Object.assign({}, s.form, { promptSistema: (s.form.promptSistema || '') + v }) })); }
+  fillConhecimentoProdutos() {
+    const prods = (this.state.data.estoque || []);
+    if (!prods.length) return this.toast('info', 'Nenhum produto no estoque para importar.');
+    const linhas = prods.map(p => '- ' + (p.nome || 'Produto') + (p.preco != null ? ' — R$ ' + this.num(p.preco).toFixed(2).replace('.', ',') : '') + (p.quantidade != null ? ' (estoque: ' + this.num(p.quantidade) + ')' : '')).join('\n');
+    const bloco = 'CATÁLOGO DE PRODUTOS:\n' + linhas;
+    this.setState(s => { const atual = s.form.conhecimento || ''; const novo = atual.indexOf('CATÁLOGO DE PRODUTOS:') >= 0 ? atual : (atual ? (atual + '\n\n' + bloco) : bloco); return { form: Object.assign({}, s.form, { conhecimento: novo }) }; }, () => this.toast('success', prods.length + ' produto(s) importado(s) para o conhecimento'));
+  }
   recommendedModel() {
     const f = this.state.form || {}; const p = (f.promptSistema || '').length; const tools = Object.values(f.ferramentas || {}).filter(Boolean).length;
     if (p > 4000 || tools >= 3) return { nome: 'gemini-2.5-flash', motivo: 'Prompt extenso ou muitas ferramentas — modelo avançado (gratuito) recomendado.' };
@@ -3884,25 +4096,36 @@ class Component extends DCLogic {
     if (!agent) { if (!silent) this.toast('info', 'Vincule um agente ativo a este canal para automatizar as respostas.'); return; }
     await this.publishAgent(agent, ch, silent);
   }
+  // monta o prompt de sistema completo com regras + base de conhecimento do agente
+  buildAgentPrompt(agent, opts) {
+    opts = opts || {};
+    let p = (agent.promptSistema || agent.desc || 'Você é um agente de atendimento da Versatil.');
+    if (agent.regras && agent.regras.trim()) {
+      p += '\n\n== REGRAS OBRIGATÓRIAS ==\nSiga sempre estas regras:\n' + agent.regras.trim();
+    }
+    if (agent.conhecimento && agent.conhecimento.trim()) {
+      p += '\n\n== BASE DE CONHECIMENTO ==\nUse SOMENTE as informações abaixo como fonte de verdade sobre a empresa, produtos, preços, horários e políticas. Se a resposta não estiver aqui e você não tiver certeza, diga que vai verificar em vez de inventar.\n\n' + agent.conhecimento.trim();
+    }
+    p += '\n\n== AGENDAMENTOS ==\nVocê pode agendar, alterar e cancelar horários. Quando o cliente pedir para CANCELAR ou ALTERAR/remarcar um agendamento, SEMPRE pergunte educadamente o MOTIVO antes de confirmar. Depois de saber o motivo, confirme a alteração ou o cancelamento.';
+    if (opts.multimodal) {
+      p += '\n\nVocê é multimodal: interprete imagens e documentos enviados pelo cliente e entenda o conteúdo de áudios (transcreva quando necessário) para responder com precisão.';
+    }
+    if (opts.whatsapp) {
+      p += '\n\nResponda como mensagem de WhatsApp: curta, cordial e em português do Brasil.';
+    } else {
+      p += '\n\nResponda em português do Brasil, curto e cordial, como mensagem de chat. Não repita saudações se a conversa já começou.';
+    }
+    return p;
+  }
   async publishAgent(agent, ch, silent) {
     const u = (ch && ch.uazapi) || {}; const base = this.uaBaseFor(u);
     if (!u.instanceToken) { if (!silent) this.toast('error', 'Canal WhatsApp não conectado.'); return; }
-    const gk = ((agent.gemini && agent.gemini.apiKey) || '').trim();
-    if (!gk) { if (!silent) this.toast('error', 'Informe a chave Gemini nas configurações do agente "' + agent.nome + '".'); return; }
-    const multimodal = agent.ferramentas && agent.ferramentas.midia;
-    const prompt = (agent.promptSistema || agent.desc || '')
-      + (multimodal ? '\n\nVocê é multimodal: interprete imagens e documentos enviados pelo cliente e entenda o conteúdo de áudios (transcreva quando necessário) para responder com precisão.' : '')
-      + '\n\nResponda como mensagem de WhatsApp.';
+    // O app responde pela IA (Gemini) a cada nova mensagem. Portanto DESATIVAMOS o
+    // chatbot nativo da uazapi para não haver resposta dupla (servidor + app).
     try {
-      await this.uaFetch(base, '/chatbot/settings', 'PUT', u.instanceToken, {
-        enabled: true, aiProvider: 'google', apiKey: gk,
-        model: (agent.forcarModelo || (agent.gemini && agent.gemini.model)) || 'gemini-flash-latest', systemPrompt: prompt,
-        temperature: (agent.temperatura != null ? agent.temperatura : 0.5),
-        welcomeMessage: agent.boasVindas || '',
-        stopBotKeyword: '#humano', inactivityTimeout: 1800,
-      });
-      if (!silent) this.toast('success', 'Agente "' + agent.nome + '" publicado no WhatsApp com Gemini!');
-    } catch (e) { if (!silent) this.toast('error', this.uaFriendly(e)); }
+      await this.uaFetch(base, '/chatbot/settings', 'PUT', u.instanceToken, { enabled: false });
+      if (!silent) this.toast('success', 'Agente "' + agent.nome + '" ativo — o app responde automaticamente (chatbot nativo desativado para evitar duplicidade).');
+    } catch (e) { if (!silent) this.toast('info', 'Agente ativo no app. (Não foi possível ajustar o chatbot nativo: ' + this.uaFriendly(e) + ')'); }
   }
   // republica em todos os canais WhatsApp conectados vinculados a um agente
   republishAgent(agent, silent) {
@@ -3986,10 +4209,14 @@ class Component extends DCLogic {
     const lastMsg = conv.msgs[conv.msgs.length - 1];
     if (auto) {
       if (!lastMsg || lastMsg.from !== 'cliente') return;
-      const key = conv.id + ':' + conv.msgs.length;
+      const key = conv.id + '|' + String(lastMsg.text || ('[' + (lastMsg.type || 'm') + ']')).slice(0, 80) + '|' + (lastMsg.time || '');
       this._lastAnswered = this._lastAnswered || {};
-      if (this._lastAnswered[conv.id] === conv.msgs.length) return;
-      this._lastAnswered[conv.id] = conv.msgs.length;
+      if (this._lastAnswered[conv.id] === key) return;
+      // trava anti-concorrência: evita duas respostas simultâneas para a mesma conversa
+      this._answering = this._answering || {};
+      if (this._answering[conv.id] && (Date.now() - this._answering[conv.id]) < 30000) return;
+      this._answering[conv.id] = Date.now();
+      this._lastAnswered[conv.id] = key;
     }
     const canalId = conv.canalId || (conv.source === 'wpp' ? (this.wppConnectedChannel() || {}).id : null);
     const agent = (canalId && (S.agentes || []).find(a => a.ativo && (a.canais || []).includes(canalId)))
@@ -4001,7 +4228,7 @@ class Component extends DCLogic {
     let geminiErr = null;
     try {
       const history = conv.msgs.map(m => (m.from === 'cliente' ? 'Cliente' : 'Empresa') + ': ' + (m.text || ('[' + (m.type || 'mídia') + ']'))).join('\n');
-      const system = (agent.promptSistema || ('Você é "' + agent.nome + '", agente de atendimento da empresa Versatil. Tom: ' + (agent.tom || 'cordial') + '.')) + '\nResponda em português do Brasil, curto e cordial, como mensagem de chat. Não repita saudações se a conversa já começou.';
+      const system = this.buildAgentPrompt(agent, { multimodal: agent.ferramentas && agent.ferramentas.midia, whatsapp: false });
       const userMsg = 'Histórico da conversa:\n' + history + '\n\nEscreva a próxima resposta da Empresa para ' + conv.nome + '.';
       const gk = agent.gemini && agent.gemini.apiKey && agent.gemini.apiKey.trim();
       if (gk) {
@@ -4017,6 +4244,7 @@ class Component extends DCLogic {
     // se o Gemini falhou, avisa o erro real e NÃO envia resposta canned repetida
     if (!((reply || '').trim())) {
       this.setState({ aiThinking: false });
+      if (this._answering) this._answering[conv.id] = 0;
       if (!auto) this.toast('error', 'IA não respondeu: ' + (geminiErr || 'sem retorno do modelo') + '. Verifique a chave Gemini na aba Modelo do agente.');
       else if (geminiErr) { console.warn('[IA auto] ' + geminiErr); if (!this._autoErrShown) { this._autoErrShown = true; this.toast('error', 'IA não respondeu automaticamente: ' + geminiErr); } }
       return;
@@ -4043,6 +4271,7 @@ class Component extends DCLogic {
     // após responder, verifica se a conversa gerou um agendamento (best-effort)
     const convAtual = (this.state.conversas || []).find(c => c.id === conv.id) || conv;
     this.iaCheckAgendamento(convAtual, agent);
+    if (this._answering) this._answering[conv.id] = 0;
   }
 
   // ---------- Supabase REST ----------
@@ -4188,6 +4417,7 @@ class Component extends DCLogic {
     if (m === 'renomear_conv') return this.saveRenomearConv();
     if (m === 'add_cliente_conv') return this.saveAddClienteConv();
     if (m === 'novo_agendamento') return this.saveNovoAgendamento();
+    if (m === 'gcal_config') return this.saveGcalConfig();
     if (m === 'config_canal') return this.saveCanal();
     if (m === 'nova_venda') {
       if (!f.cliente || !f.valor) return this.toast('error', 'Informe cliente e valor');
@@ -4344,12 +4574,12 @@ class Component extends DCLogic {
       showAdd: ['vendas', 'compras', 'despesas', 'estoque', 'clientes', 'fornecedores'].includes(tab) && !S.viewCompra, addLabel: addLabels[tab] || '', openAdd: () => this.openAdd(),
       stop: (e) => e.stopPropagation(),
       // modal
-      showModal: !!S.modal, modalTitle: { nova_venda: 'Nova Venda', nova_compra: 'Nova Ordem de Compra', nova_despesa: 'Nova Despesa', novo_produto: 'Novo Produto', novo_cliente: 'Novo Cliente', novo_fornecedor: 'Novo Fornecedor', config_agente: S.form && S.form.id ? 'Configurar Agente' : 'Novo Agente', config_canal: S.form && S.form._new ? 'Adicionar Canal' : 'Configurar Canal', conectar_wpp: 'Conectar WhatsApp', nova_conversa: 'Nova Conversa', renomear_conv: 'Renomear Contato', add_cliente_conv: 'Adicionar aos Clientes', excluir_conv: 'Excluir Conversa', novo_agendamento: 'Novo Agendamento' }[S.modal] || '',
+      showModal: !!S.modal, modalTitle: { nova_venda: 'Nova Venda', nova_compra: 'Nova Ordem de Compra', nova_despesa: 'Nova Despesa', novo_produto: 'Novo Produto', novo_cliente: 'Novo Cliente', novo_fornecedor: 'Novo Fornecedor', config_agente: S.form && S.form.id ? 'Configurar Agente' : 'Novo Agente', config_canal: S.form && S.form._new ? 'Adicionar Canal' : 'Configurar Canal', conectar_wpp: 'Conectar WhatsApp', nova_conversa: 'Nova Conversa', renomear_conv: 'Renomear Contato', add_cliente_conv: 'Adicionar aos Clientes', excluir_conv: 'Excluir Conversa', novo_agendamento: 'Novo Agendamento', gcal_config: 'Sincronizar Google Agenda' }[S.modal] || '',
       m_venda: S.modal === 'nova_venda', m_compra: S.modal === 'nova_compra', m_despesa: S.modal === 'nova_despesa', m_produto: S.modal === 'novo_produto', m_cliente: S.modal === 'novo_cliente', m_fornecedor: S.modal === 'novo_fornecedor',
       m_agente: S.modal === 'config_agente', m_canal: S.modal === 'config_canal', m_wpp: S.modal === 'conectar_wpp', m_novaconv: S.modal === 'nova_conversa',
-      m_renomear: S.modal === 'renomear_conv', m_addcli: S.modal === 'add_cliente_conv', m_excluirconv: S.modal === 'excluir_conv', m_agendamento: S.modal === 'novo_agendamento',
+      m_renomear: S.modal === 'renomear_conv', m_addcli: S.modal === 'add_cliente_conv', m_excluirconv: S.modal === 'excluir_conv', m_agendamento: S.modal === 'novo_agendamento', m_gcal: S.modal === 'gcal_config',
       onDoExcluirConv: () => this.doExcluirConv(),
-      showModalFooter: !!S.modal && S.modal !== 'conectar_wpp' && S.modal !== 'config_canal' && S.modal !== 'nova_conversa' && S.modal !== 'renomear_conv' && S.modal !== 'add_cliente_conv' && S.modal !== 'excluir_conv' && S.modal !== 'novo_agendamento',
+      showModalFooter: !!S.modal && S.modal !== 'conectar_wpp' && S.modal !== 'config_canal' && S.modal !== 'nova_conversa' && S.modal !== 'renomear_conv' && S.modal !== 'add_cliente_conv' && S.modal !== 'excluir_conv' && S.modal !== 'novo_agendamento' && S.modal !== 'gcal_config',
       agenteIsEdit: !!(S.form && S.form.id),
       onDeleteAgente: () => this.deleteAgente(S.form.id),
       onCanalUaChange: this.onCanalUaChange, onGeminiChange: this.onGeminiChange,
@@ -4665,8 +4895,9 @@ class Component extends DCLogic {
           initials: this.initials(c.nome), nome: c.nome,
           canalIcon: c.canal === 'WhatsApp' ? 'ti-brand-whatsapp' : (c.canal === 'E-mail' ? 'ti-mail' : 'ti-message-dots'),
           canalBadgeStyle: { position: 'absolute', right: '-2px', bottom: '-2px', width: '18px', height: '18px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', color: '#fff', background: c.canal === 'WhatsApp' ? '#25D366' : (c.canal === 'E-mail' ? '#6b7280' : '#3b82f6'), border: '2px solid var(--color-background-primary)' },
-          iaBadge: c.iaAtiva, setor: c.setor || 'Geral',
+          iaBadge: c.iaAtiva && !c.humano && !c.resolvida, humanoBadge: c.humano && !c.resolvida, setor: (c.humano && c.setor && c.setor !== 'Geral' && c.setor !== 'Atendimento') ? c.setor : '',
           iaBadgeStyle: { display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(109,40,217,.12)', color: '#6d28d9', fontSize: '11px', fontWeight: 700, padding: '2px 8px', borderRadius: '6px' },
+          humanoBadgeStyle: { display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'var(--color-background-info)', color: 'var(--color-text-info)', fontSize: '11px', fontWeight: 700, padding: '2px 8px', borderRadius: '6px' },
           setorBadgeStyle: { display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'var(--color-background-tertiary)', color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '6px' },
           alertShow: st === 'pendente',
           preview: lastMsg ? ((lastMsg.from === 'cliente' ? '' : '✓ ') + lastMsg.text) : (c.previewText || 'Nova conversa'),
@@ -4736,7 +4967,7 @@ class Component extends DCLogic {
             mediaEl = h('div', { style: { maxWidth: '260px' } }, [
               m.url ? h('img', { key: 'img', src: m.url, alt: m.fileName || 'imagem', style: { width: '100%', borderRadius: '10px', display: 'block' } })
                     : h('div', { key: 'ph', style: { width: '240px', height: '150px', borderRadius: '10px', background: 'repeating-linear-gradient(45deg,rgba(127,127,127,.18),rgba(127,127,127,.18) 10px,rgba(127,127,127,.08) 10px,rgba(127,127,127,.08) 20px)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: muted, fontSize: '13px', gap: '6px' } }, [h('i', { key: 'i', className: 'ti ti-photo', style: { fontSize: '20px' } }), 'imagem']),
-              m.text ? h('div', { key: 'cap', style: { marginTop: '6px', fontSize: '13.5px' } }, m.text) : null,
+              (m.text && typeof m.text === 'string') ? h('div', { key: 'cap', style: { marginTop: '6px', fontSize: '13.5px' } }, m.text) : null,
             ]);
           } else if (type === 'document') {
             mediaEl = h('div', { style: { display: 'flex', alignItems: 'center', gap: '11px', minWidth: '200px' } }, [
@@ -4753,9 +4984,10 @@ class Component extends DCLogic {
               h('span', { key: 'd', style: { fontSize: '12px', color: muted, flexShrink: 0 } }, m.duration || '0:12'),
             ]);
           }
+          const safeText = (typeof m.text === 'string') ? m.text : (m.text == null ? '' : String(m.text));
           const bubble = mediaEl
             ? h('div', { style: bubbleBase }, mediaEl)
-            : h('div', { style: bubbleBase }, m.text);
+            : h('div', { style: bubbleBase }, safeText);
           // transcrição de áudio
           let transcriptEl = null;
           if (type === 'audio') {
@@ -4770,13 +5002,49 @@ class Component extends DCLogic {
               transcriptEl = h('button', { onClick: () => this.transcreverAudio(conv.id, mi), style: { display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'var(--color-background-secondary)', border: '1px solid var(--color-border-tertiary)', borderRadius: '8px', padding: '6px 11px', fontSize: '12px', fontWeight: 600, color: 'var(--color-text-info)', cursor: 'pointer', alignSelf: mine ? 'flex-end' : 'flex-start' } }, [h('i', { key: 'i', className: 'ti ti-file-text', style: { fontSize: '14px' } }), 'Transcrever áudio']);
             }
           }
+          // citação (resposta a outra mensagem)
+          let replyEl = null;
+          if (m.replyTo) {
+            replyEl = h('div', { key: 'reply', style: { maxWidth: '74%', background: (isIa || mine) ? 'rgba(255,255,255,.15)' : 'var(--color-background-secondary)', borderLeft: '3px solid ' + ((isIa || mine) ? 'rgba(255,255,255,.6)' : '#16a34a'), borderRadius: '7px', padding: '6px 10px', fontSize: '12.5px', lineHeight: 1.4 } }, [
+              h('div', { key: 'a', style: { fontWeight: 700, color: (isIa || mine) ? 'rgba(255,255,255,.9)' : '#16a34a', marginBottom: '1px' } }, m.replyTo.autor || ''),
+              h('div', { key: 't', style: { opacity: .85, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '220px' } }, m.replyTo.text || ''),
+            ]);
+          }
+          // reação
+          let reacaoEl = null;
+          if (m.reacao) {
+            reacaoEl = h('div', { style: { marginTop: '-6px', background: 'var(--color-background-primary)', border: '1px solid var(--color-border-tertiary)', borderRadius: '999px', padding: '1px 7px', fontSize: '13px', boxShadow: '0 1px 3px rgba(0,0,0,.15)', alignSelf: mine ? 'flex-end' : 'flex-start' } }, m.reacao);
+          }
+          // ações ao passar o mouse (reagir / responder)
+          const actionBtn = (icon, title, onClick) => h('button', { key: title, onClick: onClick, title: title, style: { background: 'var(--color-background-primary)', border: '1px solid var(--color-border-tertiary)', borderRadius: '50%', width: '26px', height: '26px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--color-text-secondary)', padding: 0 } }, h('i', { className: 'ti ' + icon, style: { fontSize: '14px' } }));
+          const actions = h('div', { style: { display: 'flex', gap: '4px', alignItems: 'center' } }, [
+            actionBtn('ti-arrow-back-up', 'Responder', () => this.startReply(m.id)),
+            actionBtn('ti-mood-smile', 'Reagir', () => this.toggleReactBar(m.id)),
+          ]);
+          // barra de reações rápida
+          let reactBar = null;
+          if (S.reactBarFor === m.id) {
+            reactBar = h('div', { key: 'bar', style: { position: 'absolute', bottom: '32px', right: mine ? 0 : 'auto', left: mine ? 'auto' : 0, display: 'flex', gap: '2px', background: 'var(--color-background-primary)', border: '1px solid var(--color-border-tertiary)', borderRadius: '999px', padding: '3px 6px', boxShadow: '0 3px 10px rgba(0,0,0,.18)', zIndex: 5 } },
+              this.reactList().map(em => h('button', { key: em, onClick: () => this.reactMsg(m.id, em), style: { background: 'none', border: 'none', cursor: 'pointer', fontSize: '17px', padding: '2px 3px', lineHeight: 1 } }, em)));
+          }
+          const actionsWrap = h('div', { key: 'act', className: 'msg-actions', style: { opacity: 0, transition: 'opacity .12s', position: 'relative', display: 'flex', gap: '4px', alignItems: 'center' } }, [
+            actionBtn('ti-arrow-back-up', 'Responder', () => this.startReply(m.id)),
+            actionBtn('ti-mood-smile', 'Reagir', () => this.toggleReactBar(m.id)),
+            reactBar,
+          ]);
+          const bubbleRow = h('div', { key: 'brow', style: { display: 'flex', alignItems: 'center', gap: '8px', flexDirection: mine ? 'row-reverse' : 'row' } }, [
+            bubble,
+            actionsWrap,
+          ]);
           const rowChildren = [
             h('span', { key: 'meta', style: { fontSize: '11px', color: 'var(--color-text-secondary)', padding: '0 4px' } }, (isIa ? ('🤖 ' + (m.agente || 'Agente IA')) : (m.from === 'empresa' ? 'Você' : conv.nome)) + ' · ' + m.time + (m.sending ? ' · enviando…' : (m.failed ? ' · ✕ falhou' : (m.sent ? ' · ✓' : '')))),
-            bubble,
+            replyEl,
+            bubbleRow,
+            reacaoEl,
             transcriptEl,
           ];
           return {
-            rowEl: h('div', { style: { display: 'flex', flexDirection: 'column', alignItems: mine ? 'flex-end' : 'flex-start', gap: '4px' } }, rowChildren),
+            rowEl: h('div', { className: 'msg-row', style: { display: 'flex', flexDirection: 'column', alignItems: mine ? 'flex-end' : 'flex-start', gap: '4px' } }, rowChildren),
           };
         });
       }
@@ -4788,6 +5056,19 @@ class Component extends DCLogic {
       vm.aiThinking = S.aiThinking; vm.chatDraft = S.chatDraft;
       vm.onChatDraft = this.onChatDraft; vm.onChatKey = this.onChatKey;
       vm.sendChat = () => this.sendChat(); vm.aiRespond = () => this.aiRespond();
+      // emojis, anexos e resposta
+      vm.emojiOpen = !!S.emojiOpen; vm.attachMenuOpen = !!S.attachMenuOpen;
+      vm.onToggleEmoji = this.toggleEmoji; vm.onToggleAttach = this.toggleAttachMenu;
+      vm.emojis = this.emojiList().map(e => ({ e: e, onClick: () => this.insertEmoji(e) }));
+      vm.onPickImage = () => this.pickAttachment('image');
+      vm.onPickDoc = () => this.pickAttachment('document');
+      vm.onPickAudio = () => this.pickAttachment('audio');
+      vm.onFileChosen = this.onFileChosen;
+      vm.replyingTo = S.chatReplyTo || null;
+      vm.hasReply = !!S.chatReplyTo;
+      vm.replyAutor = S.chatReplyTo ? S.chatReplyTo.autor : '';
+      vm.replyText = S.chatReplyTo ? S.chatReplyTo.text : '';
+      vm.onCancelReply = this.cancelReply;
       vm.aiBtnDisabled = S.aiThinking || !conv;
       vm.aiBtnStyle = { background: S.aiThinking ? 'var(--color-background-tertiary)' : 'linear-gradient(135deg,#6d28d9,#3b82f6)', color: S.aiThinking ? 'var(--color-text-secondary)' : '#fff', border: 'none', borderRadius: '11px', width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: S.aiThinking ? 'default' : 'pointer', flexShrink: 0 };
     }
@@ -4799,6 +5080,10 @@ class Component extends DCLogic {
       vm.agSearch = S.search.agendamentos || '';
       vm.onAgSearch = (e) => this.setSearch(e.target.value);
       vm.onNovoAgendamento = () => this.openNovoAgendamento();
+      vm.onGcalConfig = () => this.openGcalConfig();
+      vm.gcalOn = !!(S.gcalUrl && S.gcalUrl.trim());
+      vm.gcalStatusStyle = { display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', fontWeight: 600, padding: '7px 12px', borderRadius: '9px', background: (S.gcalUrl && S.gcalUrl.trim()) ? 'var(--color-background-success)' : 'var(--color-background-secondary)', color: (S.gcalUrl && S.gcalUrl.trim()) ? 'var(--color-text-success)' : 'var(--color-text-secondary)', border: '1px solid var(--color-border-tertiary)', cursor: 'pointer' };
+      vm.gcalStatusText = (S.gcalUrl && S.gcalUrl.trim()) ? 'Google Agenda: sincronizando' : 'Google Agenda: configurar';
       const agFilt = (S.agendamentos || []).filter(a => !cs || (a.nome || '').toLowerCase().includes(cs) || (a.telefone || '').includes(cs) || (a.resumo || '').toLowerCase().includes(cs));
       vm.agendamentosEmpty = agFilt.length === 0;
       vm.agendamentosList = agFilt.map(a => ({
@@ -4807,7 +5092,16 @@ class Component extends DCLogic {
         origemStyle: { display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '11.5px', fontWeight: 700, padding: '3px 9px', borderRadius: '7px', background: a.origem === 'Manual' ? 'var(--color-background-tertiary)' : 'rgba(109,40,217,.12)', color: a.origem === 'Manual' ? 'var(--color-text-secondary)' : '#6d28d9' },
         origemIcon: a.origem === 'Manual' ? 'ti-user' : 'ti-robot',
         initials: this.initials(a.nome || 'C'),
+        cancelado: a.status === 'cancelado', alterado: a.status === 'alterado',
+        temMotivo: !!(a.motivo && a.motivo.trim()), motivo: a.motivo || '',
+        statusLabel: a.status === 'cancelado' ? 'Cancelado' : (a.status === 'alterado' ? 'Alterado' : ''),
+        statusBadgeStyle: { display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '11.5px', fontWeight: 700, padding: '3px 9px', borderRadius: '7px', background: a.status === 'cancelado' ? 'var(--color-background-danger)' : 'var(--color-background-warning)', color: a.status === 'cancelado' ? 'var(--color-text-danger)' : 'var(--color-text-warning)' },
+        statusIcon: a.status === 'cancelado' ? 'ti-calendar-x' : 'ti-calendar-repeat',
+        motivoStyle: { display: 'flex', alignItems: 'flex-start', gap: '7px', fontSize: '12.5px', lineHeight: 1.5, background: a.status === 'cancelado' ? 'var(--color-background-danger)' : 'var(--color-background-warning)', color: a.status === 'cancelado' ? 'var(--color-text-danger)' : 'var(--color-text-warning)', borderRadius: '9px', padding: '9px 12px' },
+        cardStyle: { background: 'var(--color-background-primary)', border: '1px solid ' + (a.status === 'cancelado' ? 'var(--color-text-danger)' : (a.status === 'alterado' ? 'var(--color-text-warning)' : 'var(--color-border-tertiary)')), borderRadius: 'var(--radius)', padding: '18px', display: 'flex', flexDirection: 'column', gap: '12px', opacity: a.status === 'cancelado' ? 0.85 : 1 },
+        quandoStyle: { display: 'flex', alignItems: 'center', gap: '7px', fontSize: '13.5px', fontWeight: 700, color: a.status === 'cancelado' ? 'var(--color-text-secondary)' : '#16a34a', textDecoration: a.status === 'cancelado' ? 'line-through' : 'none' },
         onOpen: () => { if (a.convId) { this.setTab('atendimento'); this.setState({ convTab: 'pendente' }); this.openConv(a.convId); } },
+        onGoogleCal: () => this.openGoogleCal(a),
         onRemove: () => this.removeAgendamento(a.id),
       }));
     }
@@ -4896,6 +5190,8 @@ class Component extends DCLogic {
       vm.aeIsGeral = at === 'geral'; vm.aeIsPers = at === 'personalidade'; vm.aeIsModelo = at === 'modelo';
       vm.aeIsRegras = at === 'regras'; vm.aeIsVoz = at === 'voz'; vm.aeIsFerr = at === 'ferramentas';
       vm.aeIsCanais = at === 'canais'; vm.aeIsConhec = at === 'conhecimento';
+      vm.conhecimentoLen = (f.conhecimento || '').length;
+      vm.onFillProdutos = () => this.fillConhecimentoProdutos();
       vm.promptLen = (f.promptSistema || '').length;
       vm.promptVars = ['{user-name}', '{user-phone-number}', '{user-email}', '{conversation-id}', '{conversation-channel}', '{created-at}'].map(v => ({ v: v, onClick: () => this.insertPromptVar(v) }));
       const rec = this.recommendedModel();
