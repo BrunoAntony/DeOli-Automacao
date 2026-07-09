@@ -59,7 +59,7 @@ module.exports = async (req, res) => {
 
     if (!from) return res.status(200).json({ ignored: true, reason: 'sem remetente' });
     // config enviada pelo app (tem prioridade sobre as variáveis de ambiente)
-    const cfg = readConfig() || {};
+    const cfg = (await readConfig()) || {};
     const geminiKey = cfg.geminiKey || process.env.GEMINI_API_KEY;
     const model = cfg.model || GEMINI_MODEL;
     const temperature = (cfg.temperature != null ? cfg.temperature : TEMPERATURE);

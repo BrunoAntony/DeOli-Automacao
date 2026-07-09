@@ -18,7 +18,7 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') return res.status(204).end();
 
   if (req.method === 'GET') {
-    const c = readConfig();
+    const c = await readConfig();
     return res.status(200).json({ ok: true, configured: !!c, config: c ? { model: c.model, temperature: c.temperature, enabled: c.enabled, hasKey: !!c.geminiKey, promptLen: (c.prompt || '').length } : null });
   }
   if (req.method !== 'POST') return res.status(405).json({ error: 'method not allowed' });
@@ -34,7 +34,7 @@ module.exports = async (req, res) => {
       enabled: body.enabled !== false,
       updatedAt: Date.now(),
     };
-    const okWrite = writeConfig(cfg);
+    const okWrite = await writeConfig(cfg);
     return res.status(200).json({ ok: true, stored: okWrite });
   } catch (e) {
     return res.status(500).json({ error: String((e && e.message) || e) });
