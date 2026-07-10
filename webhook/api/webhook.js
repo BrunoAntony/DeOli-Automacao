@@ -131,7 +131,7 @@ module.exports = async (req, res) => {
       replied = true;
       if (wantsImages) {
         const sub = findSubcategoria(catalogo, parsed.subcategoriaId);
-        const imgs = (sub && Array.isArray(sub.imagens)) ? sub.imagens.slice(0, 6) : [];
+        const imgs = (sub && Array.isArray(sub.imagens)) ? sub.imagens.slice(0, 3) : [];
         for (const dataUrl of imgs) {
           await uazapiSendImage(from, dataUrl);
           imagesSent++;
