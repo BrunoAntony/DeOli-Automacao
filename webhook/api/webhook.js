@@ -8,6 +8,9 @@
 //    • IMAGEM  → interpreta e responde
 //    • DOC     → resume e responde
 //
+//  Também pode enviar fotos de modelos do Catálogo de Produtos quando
+//  o cliente pede exemplos/fotos e uma subcategoria bate com o pedido.
+//
 //  Só responde quando a conversa está em modo IA (não pausada por
 //  humano). Se o cliente/atendente enviar #humano, o bot pausa.
 //
@@ -31,6 +34,8 @@ const TEMPERATURE = process.env.AGENT_TEMPERATURE ? Number(process.env.AGENT_TEM
 const STOP_KEYWORD = (process.env.STOP_KEYWORD || '#humano').toLowerCase();
 const AUTO_REPLY = process.env.AUTO_REPLY !== 'false';
 const DEFAULT_PROMPT = 'Você é um assistente de atendimento da empresa Versatil (gestão para salões e comércio). Responda em português do Brasil, de forma curta, cordial e útil, como uma mensagem de WhatsApp.';
+const SUPA_URL = 'https://kvxsqbfwakfqdxzilvix.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2eHNxYmZ3YWtmcWR4emlsdml4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNzQ0MjYsImV4cCI6MjA5Njc1MDQyNn0.PQads0GXVlNqr11K5co65XbWYoZJWu4V-4h4AR5DdpU';
 const { readConfig } = require('./_configStore');
 
 module.exports = async (req, res) => {
@@ -75,11 +80,29 @@ module.exports = async (req, res) => {
     const isImage = /image|photo|sticker/.test(type) || /image\//.test(mimetype);
     const isDoc   = /document|file/.test(type) || /(pdf|word|excel|sheet|text)/.test(mimetype);
 
+    // busca o histórico recente da conversa — sem isso, cada mensagem chegava
+    // "zerada" pro Gemini e ele cumprimentava/se apresentava de novo toda vez.
+    const msgId = msg.id || msg.messageid || msg.messageId || (msg.key && msg.key.id) || '';
+    const history = await fetchHistory(from, msgId);
+    const historyNote = history ? ('\n\nHistórico recente da conversa (mais antigas primeiro):\n' + history) : '';
+
+    // catálogo de produtos (categorias > subcategorias com fotos de modelos)
+    const catalogo = await fetchCatalogo();
+    const catalogoText = buildCatalogoPrompt(catalogo);
+
+    const jsonFormatNote = '\n\n== FORMATO DE RESPOSTA (OBRIGATÓRIO) ==\n'
+      + 'Responda SOMENTE com um JSON válido (sem texto fora do JSON), no formato exato:\n'
+      + '{"reply": "sua resposta em português do Brasil, curta e cordial, como mensagem de WhatsApp", "sendImages": true ou false, "subcategoriaId": "id da subcategoria escolhida, ou null"}\n'
+      + (catalogoText
+        ? ('Marque "sendImages": true e escolha o "subcategoriaId" corresponde SOMENTE quando o cliente pedir explicitamente para ver fotos, exemplos ou modelos de produtos, E uma das subcategorias abaixo corresponder claramente ao que ele pediu na conversa. Preste atenção ao contexto: nunca envie fotos de uma categoria diferente da que o cliente está perguntando. Se o cliente não pediu fotos/exemplos, ou nenhuma subcategoria bate com o pedido, use "sendImages": false e "subcategoriaId": null.\n\n== CATÁLOGO DE PRODUTOS DISPONÍVEL (categoria > subcategoria [id]: descrição) ==\n' + catalogoText)
+        : 'Não há catálogo de imagens cadastrado — sempre responda "sendImages": false e "subcategoriaId": null.');
+
     const system = (cfg.prompt || process.env.AGENT_PROMPT || DEFAULT_PROMPT)
-      + '\nResponda SEMPRE em português do Brasil, curto e cordial, como mensagem de WhatsApp.';
+      + '\nResponda SEMPRE em português do Brasil, curto e cordial, como mensagem de WhatsApp.'
+      + (history ? '\n\nIMPORTANTE: há histórico de mensagens anteriores desta conversa abaixo. Se a Empresa já cumprimentou ou se apresentou antes, NÃO cumprimente nem se reapresente de novo — apenas continue a conversa naturalmente a partir de onde parou.' : '')
+      + jsonFormatNote;
 
     let userContent;      // partes para o Gemini
-    let extractedNote = ''; // transcrição/descrição (retornada no JSON)
 
     if (isAudio || isImage || isDoc) {
       if (!mediaUrl) return res.status(200).json({ ignored: true, reason: 'mídia sem URL' });
@@ -89,21 +112,34 @@ module.exports = async (req, res) => {
       const guia = isAudio ? 'O cliente enviou um ÁUDIO. Entenda o que ele diz e responda diretamente.'
         : isImage ? 'O cliente enviou uma IMAGEM. Interprete e responda.'
         : 'O cliente enviou um DOCUMENTO. Entenda e responda.';
-      userContent = [{ text: guia + (text ? (' Legenda: "' + text + '".') : '') }, { inline_data: { mime_type: mime, data: b64 } }];
+      userContent = [{ text: guia + (text ? (' Legenda: "' + text + '".') : '') + historyNote }, { inline_data: { mime_type: mime, data: b64 } }];
     } else {
       if (!text) return res.status(200).json({ ignored: true, reason: 'sem texto' });
-      userContent = [{ text: 'Mensagem do cliente: "' + text + '"\n\nEscreva a resposta da empresa.' }];
+      userContent = [{ text: 'Mensagem do cliente: "' + text + '"' + historyNote + '\n\nEscreva a resposta da empresa.' }];
     }
 
-    // gera a resposta com o prompt do agente
-    const reply = await geminiGenerate(system, userContent, geminiKey, model, temperature);
+    // gera a resposta com o prompt do agente (JSON estruturado: texto + decisão de enviar fotos)
+    const raw = await geminiGenerate(system, userContent, geminiKey, model, temperature, true);
+    const parsed = parseAgentJson(raw);
+    const reply = (parsed && typeof parsed.reply === 'string' && parsed.reply.trim()) ? parsed.reply.trim() : raw.trim();
+    const wantsImages = !!(parsed && parsed.sendImages && parsed.subcategoriaId);
 
     let replied = false;
+    let imagesSent = 0;
     if (AUTO_REPLY && reply && process.env.UAZAPI_BASE_URL && process.env.UAZAPI_INSTANCE_TOKEN) {
       await uazapiSendText(from, reply);
       replied = true;
+      if (wantsImages) {
+        const sub = findSubcategoria(catalogo, parsed.subcategoriaId);
+        const imgs = (sub && Array.isArray(sub.imagens)) ? sub.imagens.slice(0, 6) : [];
+        for (const dataUrl of imgs) {
+          await uazapiSendImage(from, dataUrl);
+          imagesSent++;
+          await new Promise((r) => setTimeout(r, 500)); // evita rajada/flood na uazapi
+        }
+      }
     }
-    return res.status(200).json({ ok: true, type: type || 'text', reply, replied });
+    return res.status(200).json({ ok: true, type: type || 'text', reply, replied, imagesSent });
   } catch (e) {
     console.error('[webhook] erro:', e);
     return res.status(500).json({ error: String((e && e.message) || e) });
@@ -111,6 +147,76 @@ module.exports = async (req, res) => {
 };
 
 // -------- helpers --------
+function parseAgentJson(raw) {
+  const cleaned = (raw || '').replace(/```json|```/g, '').trim();
+  try { return JSON.parse(cleaned); } catch (e) {}
+  const m = cleaned.match(/\{[\s\S]*\}/);
+  if (m) { try { return JSON.parse(m[0]); } catch (e2) {} }
+  return null;
+}
+
+function buildCatalogoPrompt(catalogo) {
+  if (!Array.isArray(catalogo) || !catalogo.length) return '';
+  const lines = [];
+  for (const cat of catalogo) {
+    const subs = (cat.subcategorias || []).filter((s) => Array.isArray(s.imagens) && s.imagens.length);
+    if (!subs.length) continue;
+    lines.push('- ' + (cat.nome || 'Categoria'));
+    for (const sub of subs) {
+      lines.push('  - ' + (sub.nome || 'Subcategoria') + ' [id: ' + sub.id + ']: ' + (sub.descricao || 'sem descrição') + ' (' + sub.imagens.length + ' foto(s))');
+    }
+  }
+  return lines.join('\n');
+}
+
+function findSubcategoria(catalogo, subId) {
+  for (const cat of (catalogo || [])) {
+    const sub = (cat.subcategorias || []).find((s) => s.id === subId);
+    if (sub) return sub;
+  }
+  return null;
+}
+
+async function fetchCatalogo() {
+  try {
+    const r = await fetch(SUPA_URL + '/rest/v1/app_config?id=eq.produtos_catalogo&select=data', {
+      headers: { apikey: SUPA_KEY, Authorization: 'Bearer ' + SUPA_KEY },
+    });
+    if (!r.ok) return [];
+    const rows = await r.json();
+    const data = rows && rows[0] && rows[0].data;
+    return (data && Array.isArray(data.catalogo)) ? data.catalogo : [];
+  } catch (e) { return []; }
+}
+
+async function fetchHistory(chatid, excludeId) {
+  const base = String(process.env.UAZAPI_BASE_URL || '').replace(/\/+$/, '');
+  const token = process.env.UAZAPI_INSTANCE_TOKEN;
+  if (!base || !token || !chatid) return '';
+  try {
+    const r = await fetch(base + '/message/find', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', token: token },
+      body: JSON.stringify({ chatid: chatid, limit: 20, offset: 0 }),
+    });
+    if (!r.ok) return '';
+    const data = await r.json();
+    const arr = data.messages || data.data || (Array.isArray(data) ? data : []) || [];
+    const ordered = arr.slice().sort((a, b) => Number(a.messageTimestamp || 0) - Number(b.messageTimestamp || 0));
+    const lines = [];
+    for (const m of ordered) {
+      const id = m.id || m.messageid || m.messageId || (m.key && m.key.id) || '';
+      if (excludeId && id === excludeId) continue;
+      let txt = m.text || m.content || m.caption || (m.message && (m.message.conversation || (m.message.extendedTextMessage && m.message.extendedTextMessage.text))) || '';
+      if (txt && typeof txt === 'object') txt = txt.text || txt.caption || txt.body || '';
+      if (typeof txt !== 'string') txt = String(txt == null ? '' : txt);
+      if (!txt) txt = '[mídia]';
+      lines.push((m.fromMe ? 'Empresa' : 'Cliente') + ': ' + txt);
+    }
+    return lines.slice(-20).join('\n');
+  } catch (e) { return ''; }
+}
+
 async function downloadMedia(url) {
   const headers = {};
   if (process.env.UAZAPI_INSTANCE_TOKEN) headers.token = process.env.UAZAPI_INSTANCE_TOKEN;
@@ -120,12 +226,25 @@ async function downloadMedia(url) {
   return { buffer: await r.arrayBuffer(), contentType: r.headers.get('content-type') || '' };
 }
 
-async function geminiGenerate(system, parts, key, model, temperature) {
+async function geminiGenerate(system, parts, key, model, temperature, jsonMode) {
   const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + (model || GEMINI_MODEL) + ':generateContent?key=' + encodeURIComponent(key || process.env.GEMINI_API_KEY);
+  const generationConfig = { temperature: (temperature != null ? temperature : TEMPERATURE) };
+  if (jsonMode) {
+    generationConfig.responseMimeType = 'application/json';
+    generationConfig.responseSchema = {
+      type: 'OBJECT',
+      properties: {
+        reply: { type: 'STRING' },
+        sendImages: { type: 'BOOLEAN' },
+        subcategoriaId: { type: 'STRING', nullable: true },
+      },
+      required: ['reply', 'sendImages'],
+    };
+  }
   const payload = {
     systemInstruction: { parts: [{ text: system }] },
     contents: [{ role: 'user', parts: parts }],
-    generationConfig: { temperature: (temperature != null ? temperature : TEMPERATURE) },
+    generationConfig: generationConfig,
   };
   const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
   const data = await r.json();
@@ -142,4 +261,14 @@ async function uazapiSendText(to, text) {
     body: JSON.stringify({ number: to, text: text }),
   });
   if (!r.ok) console.error('[uazapi send] falhou:', r.status, await r.text());
+}
+
+async function uazapiSendImage(to, dataUrl) {
+  const base = String(process.env.UAZAPI_BASE_URL || '').replace(/\/+$/, '');
+  const r = await fetch(base + '/send/media', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', token: process.env.UAZAPI_INSTANCE_TOKEN },
+    body: JSON.stringify({ number: to, type: 'image', file: dataUrl }),
+  });
+  if (!r.ok) console.error('[uazapi send image] falhou:', r.status, await r.text());
 }
