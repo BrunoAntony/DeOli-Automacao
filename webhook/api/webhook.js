@@ -35,7 +35,10 @@ const STOP_KEYWORD = (process.env.STOP_KEYWORD || '#humano').toLowerCase();
 const AUTO_REPLY = process.env.AUTO_REPLY !== 'false';
 const DEFAULT_PROMPT = 'Você é um assistente de atendimento da empresa Versatil (gestão para salões e comércio). Responda em português do Brasil, de forma curta, cordial e útil, como uma mensagem de WhatsApp.';
 const SUPA_URL = 'https://kvxsqbfwakfqdxzilvix.supabase.co';
-const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2eHNxYmZ3YWtmcWR4emlsdml4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNzQ0MjYsImV4cCI6MjA5Njc1MDQyNn0.PQads0GXVlNqr11K5co65XbWYoZJWu4V-4h4AR5DdpU';
+const SUPA_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2eHNxYmZ3YWtmcWR4emlsdml4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNzQ0MjYsImV4cCI6MjA5Njc1MDQyNn0.PQads0GXVlNqr11K5co65XbWYoZJWu4V-4h4AR5DdpU';
+// service_role ignora RLS — o app agora exige login (RLS) nas tabelas do
+// Supabase, mas o webhook precisa continuar lendo o catálogo sem login.
+const SUPA_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || SUPA_ANON_KEY;
 const { readConfig } = require('./_configStore');
 
 module.exports = async (req, res) => {
@@ -231,7 +234,7 @@ function findSubcategoria(catalogo, subId) {
 async function fetchCatalogo() {
   try {
     const r = await fetch(SUPA_URL + '/rest/v1/app_config?id=eq.produtos_catalogo&select=data', {
-      headers: { apikey: SUPA_KEY, Authorization: 'Bearer ' + SUPA_KEY },
+      headers: { apikey: SUPA_ANON_KEY, Authorization: 'Bearer ' + SUPA_SERVICE_KEY },
     });
     if (!r.ok) return [];
     const rows = await r.json();

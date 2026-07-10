@@ -1676,7 +1676,7 @@
 <x-dc>
 <helmet>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/dist/tabler-icons.min.css">
-<script>window.__VERSATIL_BUILD__ = "1783710282287";</script>
+<script>window.__VERSATIL_BUILD__ = "1783712029639";</script>
 <style>
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;height:100%;}
@@ -1758,6 +1758,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #3b82f6;outline-offset
 </style>
 </helmet>
 
+<sc-if value="{{ authed }}" hint-placeholder-val="{{ false }}">
 <div class="app-shell" style="display:flex;height:100vh;width:100%;font-family:var(--font);background:var(--color-background-secondary);color:var(--color-text-primary);overflow:hidden;">
 
   <!-- ============ SIDEBAR ============ -->
@@ -1802,7 +1803,8 @@ input:focus,select:focus,textarea:focus{outline:2px solid #3b82f6;outline-offset
 
     <div style="padding:16px 20px;border-top:1px solid rgba(255,255,255,.07);display:flex;align-items:center;gap:10px;">
       <span style="{{ connDotStyle }}"></span>
-      <span style="font-size:12.5px;color:#8ea3c2;">{{ connText }}</span>
+      <span style="font-size:12.5px;color:#8ea3c2;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ authEmail }}">{{ connText }}</span>
+      <button onClick="{{ doLogout }}" title="Sair" style="background:none;border:none;color:#8ea3c2;cursor:pointer;padding:4px;flex-shrink:0;display:flex;"><i class="ti ti-logout" style="font-size:17px;"></i></button>
     </div>
   </aside>
 
@@ -3475,10 +3477,49 @@ POLÍTICAS: trocas em até 7 dias com nota." style="padding:14px 15px;border:1px
     </div>
   </sc-if>
 
+</sc-if>
+
+<!-- ============ LOGIN ============ -->
+<sc-if value="{{ showLogin }}" hint-placeholder-val="{{ false }}">
+  <div style="height:100vh;width:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(160deg,#0a1220,#1a2b42);font-family:var(--font);padding:20px;">
+    <div style="width:100%;max-width:380px;background:var(--color-background-primary);border-radius:16px;padding:34px 30px;box-shadow:0 24px 60px rgba(0,0,0,.35);">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:26px;">
+        <div style="width:52px;height:52px;border-radius:14px;background:#1a2b42;display:flex;align-items:center;justify-content:center;"><i class="ti ti-shield-lock" style="font-size:26px;color:#fff;"></i></div>
+        <h1 style="margin:8px 0 0;font-size:19px;font-weight:700;">Versatil</h1>
+        <p style="margin:0;font-size:13px;color:var(--color-text-secondary);">Entre para acessar o painel</p>
+      </div>
+      <sc-if value="{{ authError }}" hint-placeholder-val="{{ false }}">
+        <div style="background:var(--color-background-danger);color:var(--color-text-danger);border-radius:9px;padding:10px 13px;font-size:13px;margin-bottom:16px;">{{ authError }}</div>
+      </sc-if>
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--color-text-secondary);">Email
+          <input name="email" type="email" value="{{ authForm.email }}" onInput="{{ onAuthField }}" onKeyDown="{{ onAuthKey }}" placeholder="voce@empresa.com" style="padding:12px 14px;border:1px solid var(--color-border-tertiary);border-radius:10px;background:var(--color-background-secondary);font-size:14px;">
+        </label>
+        <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--color-text-secondary);">Senha
+          <input name="password" type="password" value="{{ authForm.password }}" onInput="{{ onAuthField }}" onKeyDown="{{ onAuthKey }}" placeholder="••••••••" style="padding:12px 14px;border:1px solid var(--color-border-tertiary);border-radius:10px;background:var(--color-background-secondary);font-size:14px;">
+        </label>
+        <button onClick="{{ doLogin }}" disabled="{{ authBusy }}" style="{{ authBtnStyle }}">{{ authBtnLabel }}</button>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+<!-- ============ VERIFICANDO SESSÃO ============ -->
+<sc-if value="{{ authChecking }}" hint-placeholder-val="{{ true }}">
+  <div style="height:100vh;width:100%;display:flex;align-items:center;justify-content:center;background:#0a1220;">
+    <i class="ti ti-loader-2" style="font-size:32px;color:#3b82f6;animation:spin 1s linear infinite;"></i>
+  </div>
+</sc-if>
+
 </x-dc>
 <script type="text/x-dc" data-dc-script>
 class Component extends DCLogic {
   state = {
+    authChecking: true,
+    authSession: null,
+    authForm: { email: '', password: '' },
+    authError: '',
+    authBusy: false,
     tab: 'dashboard',
     data: { vendas: [], compras: [], despesas: [], estoque: [], clientes: [], fornecedores: [] },
     loading: true,
@@ -3518,8 +3559,91 @@ class Component extends DCLogic {
   SUPA_URL = 'https://kvxsqbfwakfqdxzilvix.supabase.co';
   SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2eHNxYmZ3YWtmcWR4emlsdml4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNzQ0MjYsImV4cCI6MjA5Njc1MDQyNn0.PQads0GXVlNqr11K5co65XbWYoZJWu4V-4h4AR5DdpU';
 
-  componentDidMount() { this.loadAll(); this.seedAtendimento(); this.loadCatalogo(); setTimeout(() => this.checkRetornosIA(), 800); this._pollMsgs = setInterval(() => this.pollNovasMensagens(), 12000); this._updCheck = setInterval(() => this.checkForUpdate(), 60000); setTimeout(() => this.checkForUpdate(), 5000); setTimeout(() => this.startSSE(), 1500); }
+  componentDidMount() { this.restoreSession(() => { if (this.state.authSession) this.boot(); }); }
   componentWillUnmount() { clearInterval(this._pollMsgs); clearInterval(this._updCheck); this.stopSSE(); }
+  boot() { this.loadAll(); this.seedAtendimento(); this.loadCatalogo(); setTimeout(() => this.checkRetornosIA(), 800); this._pollMsgs = setInterval(() => this.pollNovasMensagens(), 12000); this._updCheck = setInterval(() => this.checkForUpdate(), 60000); setTimeout(() => this.checkForUpdate(), 5000); setTimeout(() => this.startSSE(), 1500); }
+  // ---------- autenticação (Supabase Auth — conta única de administrador) ----------
+  async authSignIn(email, password) {
+    const r = await fetch(this.SUPA_URL + '/auth/v1/token?grant_type=password', {
+      method: 'POST', headers: { apikey: this.SUPA_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.error_description || data.msg || data.error || 'Falha no login');
+    return data;
+  }
+  async authRefresh(refreshToken) {
+    const r = await fetch(this.SUPA_URL + '/auth/v1/token?grant_type=refresh_token', {
+      method: 'POST', headers: { apikey: this.SUPA_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.error_description || data.msg || data.error || 'Sessão expirada');
+    return data;
+  }
+  saveSession(data) {
+    const session = {
+      access_token: data.access_token,
+      refresh_token: data.refresh_token,
+      expires_at: Date.now() + ((data.expires_in || 3600) * 1000),
+      email: (data.user && data.user.email) || (this.state.authSession && this.state.authSession.email) || '',
+    };
+    try { localStorage.setItem('versatil_auth', JSON.stringify(session)); } catch (e) {}
+    this.setState({ authSession: session });
+    return session;
+  }
+  restoreSession(cb) {
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem('versatil_auth') || 'null'); } catch (e) {}
+    if (!saved || !saved.refresh_token) { this.setState({ authChecking: false }, cb); return; }
+    if (saved.expires_at && saved.expires_at > Date.now() + 60000) {
+      this.setState({ authSession: saved, authChecking: false }, cb);
+      return;
+    }
+    this.authRefresh(saved.refresh_token).then(data => {
+      this.saveSession(data);
+      this.setState({ authChecking: false }, cb);
+    }).catch(() => {
+      try { localStorage.removeItem('versatil_auth'); } catch (e) {}
+      this.setState({ authSession: null, authChecking: false }, cb);
+    });
+  }
+  // garante um access_token válido antes de cada chamada ao Supabase (renova se estiver perto de expirar)
+  async ensureAuthFresh() {
+    const s = this.state.authSession;
+    if (!s || !s.refresh_token) return;
+    if (s.expires_at && s.expires_at < Date.now() + 60000) {
+      try { this.saveSession(await this.authRefresh(s.refresh_token)); } catch (e) { this.doLogout(); }
+    }
+  }
+  onAuthField = (e) => { const n = e.target.name, v = e.target.value; this.setState(s => ({ authForm: Object.assign({}, s.authForm, { [n]: v }) })); };
+  onAuthKey = (e) => { if (e.key === 'Enter') { e.preventDefault(); this.doLogin(); } };
+  authFriendly(e) {
+    const m = (e && e.message) || String(e);
+    if (/invalid.*(credential|login)/i.test(m)) return 'Email ou senha incorretos.';
+    if (/Failed to fetch|NetworkError/i.test(m)) return 'Falha de rede — verifique sua conexão.';
+    return m;
+  }
+  doLogin = async () => {
+    const f = this.state.authForm || {};
+    const email = (f.email || '').trim();
+    const password = f.password || '';
+    if (!email || !password) { this.setState({ authError: 'Informe email e senha' }); return; }
+    this.setState({ authBusy: true, authError: '' });
+    try {
+      const data = await this.authSignIn(email, password);
+      this.saveSession(data);
+      this.setState({ authBusy: false, authForm: { email: '', password: '' } });
+      this.boot();
+    } catch (e) {
+      this.setState({ authBusy: false, authError: this.authFriendly(e) });
+    }
+  };
+  doLogout = () => {
+    try { localStorage.removeItem('versatil_auth'); } catch (e) {}
+    clearInterval(this._pollMsgs); clearInterval(this._updCheck); this.stopSSE();
+    this.setState({ authSession: null, authForm: { email: '', password: '' }, authError: '' });
+  };
   // --- verificação de atualização publicada (Vercel) ---
   async checkForUpdate() {
     try {
@@ -4785,10 +4909,14 @@ class Component extends DCLogic {
   }
 
   // ---------- Supabase REST ----------
+  // usa o access_token da sessão logada (exigido pelas políticas de RLS); sem sessão, cai
+  // na anon key só para não quebrar chamadas feitas antes do login (RLS bloqueia mesmo assim).
   headers(extra) {
-    return Object.assign({ apikey: this.SUPA_KEY, Authorization: 'Bearer ' + this.SUPA_KEY, 'Content-Type': 'application/json' }, extra || {});
+    const token = (this.state.authSession && this.state.authSession.access_token) || this.SUPA_KEY;
+    return Object.assign({ apikey: this.SUPA_KEY, Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }, extra || {});
   }
   async api(method, table, opts) {
+    await this.ensureAuthFresh();
     opts = opts || {};
     let url = this.SUPA_URL + '/rest/v1/' + table;
     if (opts.id != null) url += '?id=eq.' + encodeURIComponent(opts.id);
@@ -5000,6 +5128,21 @@ class Component extends DCLogic {
     const S = this.state, D = S.data, tab = S.tab;
     const isDash = tab === 'dashboard';
     const vm = {};
+    // ---- autenticação (gate de tela inteira) ----
+    vm.authChecking = !!S.authChecking;
+    vm.authed = !S.authChecking && !!S.authSession;
+    vm.showLogin = !S.authChecking && !S.authSession;
+    vm.authEmail = (S.authSession && S.authSession.email) || '';
+    vm.authForm = S.authForm || { email: '', password: '' };
+    vm.onAuthField = this.onAuthField;
+    vm.onAuthKey = this.onAuthKey;
+    vm.doLogin = this.doLogin;
+    vm.doLogout = this.doLogout;
+    vm.authError = S.authError || '';
+    vm.authBusy = !!S.authBusy;
+    vm.authBtnLabel = S.authBusy ? 'Entrando…' : 'Entrar';
+    vm.authBtnStyle = { width: '100%', background: '#1a2b42', color: '#fff', border: 'none', borderRadius: '10px', padding: '13px', fontWeight: 700, fontSize: '14.5px', cursor: S.authBusy ? 'not-allowed' : 'pointer', opacity: S.authBusy ? .7 : 1, marginTop: '4px' };
+    if (!vm.authed) return vm;
     vm.updateAvailable = !!S.updateAvailable;
     vm.onReloadApp = this.reloadApp;
     // nav
