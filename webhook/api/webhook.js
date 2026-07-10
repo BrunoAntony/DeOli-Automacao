@@ -92,9 +92,9 @@ module.exports = async (req, res) => {
 
     const jsonFormatNote = '\n\n== FORMATO DE RESPOSTA (OBRIGATÓRIO) ==\n'
       + 'Responda SOMENTE com um JSON válido (sem texto fora do JSON), no formato exato:\n'
-      + '{"reply": "sua resposta em português do Brasil, curta e cordial, como mensagem de WhatsApp", "sendImages": true ou false, "subcategoriaId": "id da subcategoria escolhida, ou null"}\n'
+      + '{"reply": "sua resposta em português do Brasil, curta e cordial, como mensagem de WhatsApp", "sendImages": true ou false, "subcategoriaId": "id escolhido (de uma subcategoria OU, se o cliente pediu um estilo específico, o id desse estilo), ou null"}\n'
       + (catalogoText
-        ? ('Marque "sendImages": true e escolha o "subcategoriaId" corresponde SOMENTE quando o cliente pedir explicitamente para ver fotos, exemplos ou modelos de produtos, E uma das subcategorias abaixo corresponder claramente ao que ele pediu na conversa. Preste atenção ao contexto: nunca envie fotos de uma categoria diferente da que o cliente está perguntando. Se o cliente não pediu fotos/exemplos, ou nenhuma subcategoria bate com o pedido, use "sendImages": false e "subcategoriaId": null.\n\n== CATÁLOGO DE PRODUTOS DISPONÍVEL (categoria > subcategoria [id]: descrição) ==\n' + catalogoText)
+        ? ('Marque "sendImages": true e escolha o "subcategoriaId" corresponde SOMENTE quando o cliente pedir explicitamente para ver fotos, exemplos ou modelos de produtos, E um item abaixo corresponder claramente ao que ele pediu na conversa. Se o cliente mencionar um estilo específico (ex: "quero algo floral", "tem modelo minimalista?"), use o id do ESTILO correspondente; se ele só pediu fotos da subcategoria em geral, sem mencionar estilo, use o id da SUBCATEGORIA. Preste atenção ao contexto: nunca envie fotos de uma categoria/subcategoria/estilo diferente da que o cliente está perguntando. Se o cliente não pediu fotos/exemplos, ou nada bate com o pedido, use "sendImages": false e "subcategoriaId": null.\n\n== CATÁLOGO DE PRODUTOS DISPONÍVEL (categoria > subcategoria [id]: descrição / estilo [id]: descrição) ==\n' + catalogoText)
         : 'Não há catálogo de imagens cadastrado — sempre responda "sendImages": false e "subcategoriaId": null.');
 
     const system = (cfg.prompt || process.env.AGENT_PROMPT || DEFAULT_PROMPT)
@@ -130,7 +130,7 @@ module.exports = async (req, res) => {
       await uazapiSendText(from, reply);
       replied = true;
       if (wantsImages) {
-        const sub = findSubcategoria(catalogo, parsed.subcategoriaId);
+        const sub = findCatalogItem(catalogo, parsed.subcategoriaId);
         let imgs = [];
         if (sub && sub.driveFolderId && cfg.driveApiKey) {
           const files = await fetchDriveFolderImages(sub.driveFolderId, cfg.driveApiKey);
@@ -162,16 +162,26 @@ function parseAgentJson(raw) {
   return null;
 }
 
+function hasPhotos(node) {
+  return (Array.isArray(node.imagens) && node.imagens.length > 0) || !!node.driveFolderId;
+}
+
 function buildCatalogoPrompt(catalogo) {
   if (!Array.isArray(catalogo) || !catalogo.length) return '';
   const lines = [];
   for (const cat of catalogo) {
-    const subs = (cat.subcategorias || []).filter((s) => (Array.isArray(s.imagens) && s.imagens.length) || s.driveFolderId);
+    const subs = (cat.subcategorias || []).filter((s) => hasPhotos(s) || (s.estilos || []).some(hasPhotos));
     if (!subs.length) continue;
     lines.push('- ' + (cat.nome || 'Categoria'));
     for (const sub of subs) {
-      const qtd = (sub.imagens && sub.imagens.length) ? (sub.imagens.length + ' foto(s))') : 'fotos no Google Drive)';
-      lines.push('  - ' + (sub.nome || 'Subcategoria') + ' [id: ' + sub.id + ']: ' + (sub.descricao || 'sem descrição') + ' (' + qtd);
+      if (hasPhotos(sub)) {
+        const qtd = (sub.imagens && sub.imagens.length) ? (sub.imagens.length + ' foto(s))') : 'fotos no Google Drive)';
+        lines.push('  - ' + (sub.nome || 'Subcategoria') + ' [id: ' + sub.id + ']: ' + (sub.descricao || 'sem descrição') + ' (' + qtd);
+      }
+      for (const est of (sub.estilos || []).filter(hasPhotos)) {
+        const qtd = (est.imagens && est.imagens.length) ? (est.imagens.length + ' foto(s))') : 'fotos no Google Drive)';
+        lines.push('    - Estilo ' + (est.nome || 'Estilo') + ' (de ' + (sub.nome || 'Subcategoria') + ') [id: ' + est.id + ']: ' + (est.descricao || 'sem descrição') + ' (' + qtd);
+      }
     }
   }
   return lines.join('\n');
@@ -199,11 +209,15 @@ async function downloadDriveFile(fileId) {
   return 'data:' + contentType + ';base64,' + Buffer.from(buf).toString('base64');
 }
 
-function findSubcategoria(catalogo, subId) {
-  const target = String(subId);
+// procura por id tanto no nível de subcategoria quanto no nível de estilo (3º nível, dentro da subcategoria)
+function findCatalogItem(catalogo, id) {
+  const target = String(id);
   for (const cat of (catalogo || [])) {
-    const sub = (cat.subcategorias || []).find((s) => String(s.id) === target);
-    if (sub) return sub;
+    for (const sub of (cat.subcategorias || [])) {
+      if (String(sub.id) === target) return sub;
+      const est = (sub.estilos || []).find((e) => String(e.id) === target);
+      if (est) return est;
+    }
   }
   return null;
 }
