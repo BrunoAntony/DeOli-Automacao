@@ -1676,7 +1676,7 @@
 <x-dc>
 <helmet>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/dist/tabler-icons.min.css">
-<script>window.__VERSATIL_BUILD__ = "1783560227405";</script>
+<script>window.__VERSATIL_BUILD__ = "1783682825173";</script>
 <style>
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;height:100%;}
@@ -3334,7 +3334,7 @@ class Component extends DCLogic {
   SUPA_URL = 'https://kvxsqbfwakfqdxzilvix.supabase.co';
   SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2eHNxYmZ3YWtmcWR4emlsdml4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNzQ0MjYsImV4cCI6MjA5Njc1MDQyNn0.PQads0GXVlNqr11K5co65XbWYoZJWu4V-4h4AR5DdpU';
 
-  componentDidMount() { this.loadAll(); this.seedAtendimento(); this.loadCatalogo(); setTimeout(() => this.checkRetornosIA(), 800); this._pollMsgs = setInterval(() => this.pollNovasMensagens(), 12000); this._updCheck = setInterval(() => this.checkForUpdate(), 60000); setTimeout(() => this.startSSE(), 1500); }
+  componentDidMount() { this.loadAll(); this.seedAtendimento(); this.loadCatalogo(); setTimeout(() => this.checkRetornosIA(), 800); this._pollMsgs = setInterval(() => this.pollNovasMensagens(), 12000); this._updCheck = setInterval(() => this.checkForUpdate(), 60000); setTimeout(() => this.checkForUpdate(), 5000); setTimeout(() => this.startSSE(), 1500); }
   componentWillUnmount() { clearInterval(this._pollMsgs); clearInterval(this._updCheck); this.stopSSE(); }
   // --- verificação de atualização publicada (Vercel) ---
   async checkForUpdate() {
@@ -3344,7 +3344,7 @@ class Component extends DCLogic {
       const m = txt.match(/__VERSATIL_BUILD__\s*=\s*"([^"]+)"/);
       const remote = m && m[1];
       const local = window.__VERSATIL_BUILD__;
-      if (remote && local && remote !== local && local !== '1783560227405') {
+      if (remote && local && remote !== local) {
         this.setState({ updateAvailable: true });
       }
     } catch (e) { /* silencioso: sem rede ou CORS */ }
