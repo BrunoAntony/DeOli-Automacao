@@ -170,8 +170,9 @@ function buildCatalogoPrompt(catalogo) {
 }
 
 function findSubcategoria(catalogo, subId) {
+  const target = String(subId);
   for (const cat of (catalogo || [])) {
-    const sub = (cat.subcategorias || []).find((s) => s.id === subId);
+    const sub = (cat.subcategorias || []).find((s) => String(s.id) === target);
     if (sub) return sub;
   }
   return null;
