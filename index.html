@@ -1676,7 +1676,7 @@
 <x-dc>
 <helmet>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/dist/tabler-icons.min.css">
-<script>window.__VERSATIL_BUILD__ = "1783692193158";</script>
+<script>window.__VERSATIL_BUILD__ = "1783703382678";</script>
 <style>
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;height:100%;}
@@ -1813,11 +1813,16 @@ input:focus,select:focus,textarea:focus{outline:2px solid #3b82f6;outline-offset
         <h1 style="margin:0;font-size:21px;font-weight:700;letter-spacing:-.3px;">{{ pageTitle }}</h1>
         <p style="margin:3px 0 0;font-size:13px;color:var(--color-text-secondary);">{{ pageSubtitle }}</p>
       </div>
-      <sc-if value="{{ showAdd }}" hint-placeholder-val="{{ false }}">
-        <button onClick="{{ openAdd }}" style="display:inline-flex;align-items:center;gap:8px;background:#1a2b42;color:#fff;border:none;border-radius:10px;padding:11px 18px;font-weight:600;font-size:14px;cursor:pointer;">
-          <i class="ti ti-plus" style="font-size:17px;"></i>{{ addLabel }}
-        </button>
-      </sc-if>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <sc-if value="{{ isProdutos }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ onDriveConfig }}" title="Configurar fotos do catálogo via Google Drive" style="{{ driveStatusStyle }}"><i class="ti ti-brand-google-drive" style="font-size:16px;"></i>{{ driveStatusText }}</button>
+        </sc-if>
+        <sc-if value="{{ showAdd }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ openAdd }}" style="display:inline-flex;align-items:center;gap:8px;background:#1a2b42;color:#fff;border:none;border-radius:10px;padding:11px 18px;font-weight:600;font-size:14px;cursor:pointer;">
+            <i class="ti ti-plus" style="font-size:17px;"></i>{{ addLabel }}
+          </button>
+        </sc-if>
+      </div>
     </header>
 
     <div class="app-content" style="flex:1;overflow-y:auto;padding:28px 32px;">
@@ -2242,6 +2247,9 @@ input:focus,select:focus,textarea:focus{outline:2px solid #3b82f6;outline-offset
                           </div>
                         </div>
                         <div style="font-size:12.5px;color:var(--color-text-secondary);line-height:1.5;">{{ sc.descricao }}</div>
+                        <sc-if value="{{ sc.hasDrive }}" hint-placeholder-val="{{ false }}">
+                          <a href="{{ sc.driveUrl }}" target="_blank" rel="noopener" onClick="{{ stop }}" style="display:inline-flex;align-items:center;gap:6px;width:fit-content;background:var(--color-background-info);color:var(--color-text-info);border-radius:7px;padding:5px 10px;font-size:11.5px;font-weight:600;text-decoration:none;"><i class="ti ti-brand-google-drive" style="font-size:14px;"></i>Fotos via Drive</a>
+                        </sc-if>
                         <sc-if value="{{ sc.hasImagens }}" hint-placeholder-val="{{ false }}">
                           <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(56px,1fr));gap:6px;">
                             <sc-for list="{{ sc.imagensList }}" as="img" hint-placeholder-count="0">
@@ -3027,6 +3035,10 @@ POLÍTICAS: trocas em até 7 dias com nota." style="padding:14px 15px;border:1px
               <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--color-text-secondary);">Breve descrição
                 <textarea name="descricao" value="{{ form.descricao }}" onInput="{{ onFormChange }}" rows="3" placeholder="Descreva brevemente o que são esses produtos" style="padding:11px 13px;border:1px solid var(--color-border-tertiary);border-radius:9px;background:var(--color-background-primary);font-family:inherit;resize:vertical;"></textarea>
               </label>
+              <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--color-text-secondary);">Pasta do Google Drive (opcional)
+                <input name="driveFolderId" value="{{ form.driveFolderId }}" onInput="{{ onFormChange }}" placeholder="Cole o link ou ID da pasta pública do Drive" style="padding:11px 13px;border:1px solid var(--color-border-tertiary);border-radius:9px;background:var(--color-background-primary);">
+              </label>
+              <div style="font-size:12px;color:var(--color-text-secondary);line-height:1.5;margin-top:-8px;">Se preenchida, o agente de IA busca as fotos direto dessa pasta (não precisa fazer upload manual). A pasta precisa estar compartilhada como "Qualquer pessoa com o link" e a chave do Drive precisa estar configurada (botão "Google Drive" no topo da página).</div>
               <div>
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
                   <span style="font-size:13px;font-weight:600;color:var(--color-text-secondary);">Imagens de modelos</span>
@@ -3155,6 +3167,27 @@ POLÍTICAS: trocas em até 7 dias com nota." style="padding:14px 15px;border:1px
               </label>
               <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--color-text-secondary);">Segredo (opcional)
                 <input name="gcalSecret" value="{{ form.gcalSecret }}" onInput="{{ onFormChange }}" placeholder="igual ao SYNC_SECRET do backend" style="padding:11px 13px;border:1px solid var(--color-border-tertiary);border-radius:9px;background:var(--color-background-primary);">
+              </label>
+              <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:2px;">
+                <button onClick="{{ closeModal }}" style="background:var(--color-background-tertiary);color:var(--color-text-primary);border:none;border-radius:10px;padding:11px 20px;font-weight:600;font-size:14px;cursor:pointer;">Cancelar</button>
+                <button onClick="{{ saveModal }}" style="background:#1a73e8;color:#fff;border:none;border-radius:10px;padding:11px 22px;font-weight:600;font-size:14px;cursor:pointer;">Salvar</button>
+              </div>
+            </div>
+          </sc-if>
+
+          <!-- CONFIG GOOGLE DRIVE (fotos do catálogo) -->
+          <sc-if value="{{ m_drive }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:16px;">
+              <div style="display:flex;align-items:flex-start;gap:11px;background:var(--color-background-info);color:var(--color-text-info);border-radius:11px;padding:13px 15px;font-size:13px;line-height:1.5;"><i class="ti ti-brand-google-drive" style="font-size:19px;flex-shrink:0;"></i>Com isso o agente de IA envia fotos direto de pastas do Google Drive, sem precisar fazer upload manual em cada subcategoria.</div>
+              <div style="font-size:12.5px;color:var(--color-text-secondary);line-height:1.7;background:var(--color-background-secondary);border-radius:9px;padding:13px 15px;">
+                <strong>Como configurar (uma vez só):</strong><br>
+                1. Acesse console.cloud.google.com, crie/selecione um projeto e ative a <strong>Google Drive API</strong>.<br>
+                2. Em "Credenciais", crie uma <strong>Chave de API</strong> e cole abaixo.<br>
+                3. Para cada pasta de fotos no Drive, clique em Compartilhar → "Qualquer pessoa com o link" → Leitor.<br>
+                4. Cole o link (ou ID) dessa pasta no campo "Pasta do Google Drive" de cada subcategoria do catálogo.
+              </div>
+              <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--color-text-secondary);">Chave de API do Google Drive
+                <input name="driveApiKey" value="{{ form.driveApiKey }}" onInput="{{ onFormChange }}" placeholder="AIza..." style="padding:11px 13px;border:1px solid var(--color-border-tertiary);border-radius:9px;background:var(--color-background-primary);">
               </label>
               <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:2px;">
                 <button onClick="{{ closeModal }}" style="background:var(--color-background-tertiary);color:var(--color-text-primary);border:none;border-radius:10px;padding:11px 20px;font-weight:600;font-size:14px;cursor:pointer;">Cancelar</button>
@@ -3489,16 +3522,17 @@ class Component extends DCLogic {
       agendamentos: (saved && saved.agendamentos) || [],
       gcalUrl: (saved && saved.gcalUrl) || '',
       gcalSecret: (saved && saved.gcalSecret) || '',
+      driveApiKey: (saved && saved.driveApiKey) || '',
       canais: (saved && saved.canais) || defCanais,
       wppStatus: savedWpp ? 'conectado' : 'desconectado',
       activeConv: null,
     }, () => { this.persistCA(); if (this.wppConnectedChannel()) this.syncWppConversas(true); });
   }
   persistCA = () => {
-    const snapshot = { conversas: this.state.conversas, agentes: this.state.agentes, canais: this.state.canais, agendamentos: this.state.agendamentos, gcalUrl: this.state.gcalUrl, gcalSecret: this.state.gcalSecret };
+    const snapshot = { conversas: this.state.conversas, agentes: this.state.agentes, canais: this.state.canais, agendamentos: this.state.agendamentos, gcalUrl: this.state.gcalUrl, gcalSecret: this.state.gcalSecret, driveApiKey: this.state.driveApiKey };
     try { localStorage.setItem('versatil_ca', JSON.stringify(snapshot)); } catch (e) {}
     // sincroniza com o Supabase (compartilhado entre navegadores/dispositivos) — SEM as conversas (fonte real: WhatsApp)
-    const shared = { agentes: snapshot.agentes, canais: snapshot.canais, agendamentos: snapshot.agendamentos, gcalUrl: snapshot.gcalUrl, gcalSecret: snapshot.gcalSecret };
+    const shared = { agentes: snapshot.agentes, canais: snapshot.canais, agendamentos: snapshot.agendamentos, gcalUrl: snapshot.gcalUrl, gcalSecret: snapshot.gcalSecret, driveApiKey: snapshot.driveApiKey };
     clearTimeout(this._caSyncT);
     this._caSyncT = setTimeout(() => this.syncSharedConfig(shared), 900);
   };
@@ -3567,7 +3601,17 @@ class Component extends DCLogic {
     this.setState(s => ({ catalogo: s.catalogo.filter(c => c.id !== id) }), () => { this.persistCatalogo(); this.toast('info', 'Categoria removida'); });
   }
   openSubcategoriaModal(catId, item) {
-    this.setState({ modal: 'subcategoria', form: { _catId: catId, _id: item ? item.id : null, nome: item ? item.nome : '', descricao: item ? item.descricao : '', imagens: item ? (item.imagens || []).slice() : [] } });
+    this.setState({ modal: 'subcategoria', form: { _catId: catId, _id: item ? item.id : null, nome: item ? item.nome : '', descricao: item ? item.descricao : '', imagens: item ? (item.imagens || []).slice() : [], driveFolderId: item ? (item.driveFolderId || '') : '' } });
+  }
+  // aceita tanto o ID puro quanto um link completo (https://drive.google.com/drive/folders/<ID>?usp=sharing)
+  extractDriveFolderId(input) {
+    const v = (input || '').trim();
+    if (!v) return '';
+    const m = v.match(/\/folders\/([a-zA-Z0-9_-]+)/);
+    if (m) return m[1];
+    const m2 = v.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    if (m2) return m2[1];
+    return v;
   }
   onCatalogoImageChosen = (e) => {
     const files = Array.from(e.target.files || []);
@@ -3591,7 +3635,7 @@ class Component extends DCLogic {
     if (!nome) return this.toast('error', 'Informe o nome da subcategoria');
     const isEdit = !!f._id;
     this.setState(s => {
-      const sub = { id: isEdit ? f._id : this.genId(), nome, descricao: (f.descricao || '').trim(), imagens: f.imagens || [] };
+      const sub = { id: isEdit ? f._id : this.genId(), nome, descricao: (f.descricao || '').trim(), imagens: f.imagens || [], driveFolderId: this.extractDriveFolderId(f.driveFolderId) };
       const catalogo = s.catalogo.map(c => {
         if (c.id !== f._catId) return c;
         const subcategorias = isEdit ? (c.subcategorias || []).map(x => x.id === f._id ? sub : x) : [sub, ...(c.subcategorias || [])];
@@ -3615,6 +3659,16 @@ class Component extends DCLogic {
   saveGcalConfig() {
     const f = this.state.form;
     this.setState({ gcalUrl: (f.gcalUrl || '').trim(), gcalSecret: (f.gcalSecret || '').trim(), modal: null, form: {} }, () => { this.persistCA(); this.toast('success', 'Sincronização com Google Agenda salva'); });
+  }
+  // ---- Google Drive (fotos do catálogo puxadas direto de pastas do Drive) ----
+  openDriveConfig() { this.setState({ modal: 'drive_config', form: { driveApiKey: this.state.driveApiKey || '' } }); }
+  saveDriveConfig() {
+    const f = this.state.form;
+    this.setState({ driveApiKey: (f.driveApiKey || '').trim(), modal: null, form: {} }, () => {
+      this.persistCA();
+      this.toast('success', 'Chave do Google Drive salva');
+      (this.state.agentes || []).filter(a => a.ativo).forEach(a => this.syncAgentToWebhook(a));
+    });
   }
   async syncGoogleCal(item, manual) {
     const url = (this.state.gcalUrl || '').trim();
@@ -4150,6 +4204,7 @@ class Component extends DCLogic {
       temperature: (agent.temperatura != null ? agent.temperatura : 0.5),
       welcome: agent.boasVindas || '',
       enabled: agent.ativo !== false,
+      driveApiKey: (this.state.driveApiKey || '').trim(),
     };
     try {
       const r = await fetch(configUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
@@ -4725,6 +4780,7 @@ class Component extends DCLogic {
     if (m === 'add_cliente_conv') return this.saveAddClienteConv();
     if (m === 'novo_agendamento') return this.saveNovoAgendamento();
     if (m === 'gcal_config') return this.saveGcalConfig();
+    if (m === 'drive_config') return this.saveDriveConfig();
     if (m === 'config_canal') return this.saveCanal();
     if (m === 'nova_categoria') return this.saveCategoria();
     if (m === 'subcategoria') return this.saveSubcategoria();
@@ -4887,10 +4943,10 @@ class Component extends DCLogic {
       showAdd: ['vendas', 'compras', 'despesas', 'estoque', 'clientes', 'fornecedores', 'produtos'].includes(tab) && !S.viewCompra, addLabel: addLabels[tab] || '', openAdd: () => this.openAdd(),
       stop: (e) => e.stopPropagation(),
       // modal
-      showModal: !!S.modal, modalTitle: { nova_venda: 'Nova Venda', nova_compra: 'Nova Ordem de Compra', nova_despesa: 'Nova Despesa', novo_produto: 'Novo Produto', novo_cliente: 'Novo Cliente', novo_fornecedor: 'Novo Fornecedor', nova_categoria: (S.form && S.form._id) ? 'Editar Categoria' : 'Nova Categoria', subcategoria: (S.form && S.form._id) ? 'Editar Subcategoria' : 'Nova Subcategoria', config_agente: S.form && S.form.id ? 'Configurar Agente' : 'Novo Agente', config_canal: S.form && S.form._new ? 'Adicionar Canal' : 'Configurar Canal', conectar_wpp: 'Conectar WhatsApp', nova_conversa: 'Nova Conversa', renomear_conv: 'Renomear Contato', add_cliente_conv: 'Adicionar aos Clientes', excluir_conv: 'Excluir Conversa', novo_agendamento: 'Novo Agendamento', gcal_config: 'Sincronizar Google Agenda' }[S.modal] || '',
+      showModal: !!S.modal, modalTitle: { nova_venda: 'Nova Venda', nova_compra: 'Nova Ordem de Compra', nova_despesa: 'Nova Despesa', novo_produto: 'Novo Produto', novo_cliente: 'Novo Cliente', novo_fornecedor: 'Novo Fornecedor', nova_categoria: (S.form && S.form._id) ? 'Editar Categoria' : 'Nova Categoria', subcategoria: (S.form && S.form._id) ? 'Editar Subcategoria' : 'Nova Subcategoria', config_agente: S.form && S.form.id ? 'Configurar Agente' : 'Novo Agente', config_canal: S.form && S.form._new ? 'Adicionar Canal' : 'Configurar Canal', conectar_wpp: 'Conectar WhatsApp', nova_conversa: 'Nova Conversa', renomear_conv: 'Renomear Contato', add_cliente_conv: 'Adicionar aos Clientes', excluir_conv: 'Excluir Conversa', novo_agendamento: 'Novo Agendamento', gcal_config: 'Sincronizar Google Agenda', drive_config: 'Fotos do Catálogo via Google Drive' }[S.modal] || '',
       m_venda: S.modal === 'nova_venda', m_compra: S.modal === 'nova_compra', m_despesa: S.modal === 'nova_despesa', m_produto: S.modal === 'novo_produto', m_cliente: S.modal === 'novo_cliente', m_fornecedor: S.modal === 'novo_fornecedor', m_categoria: S.modal === 'nova_categoria', m_subcategoria: S.modal === 'subcategoria',
       m_agente: S.modal === 'config_agente', m_canal: S.modal === 'config_canal', m_wpp: S.modal === 'conectar_wpp', m_novaconv: S.modal === 'nova_conversa',
-      m_renomear: S.modal === 'renomear_conv', m_addcli: S.modal === 'add_cliente_conv', m_excluirconv: S.modal === 'excluir_conv', m_agendamento: S.modal === 'novo_agendamento', m_gcal: S.modal === 'gcal_config',
+      m_renomear: S.modal === 'renomear_conv', m_addcli: S.modal === 'add_cliente_conv', m_excluirconv: S.modal === 'excluir_conv', m_agendamento: S.modal === 'novo_agendamento', m_gcal: S.modal === 'gcal_config', m_drive: S.modal === 'drive_config',
       onDoExcluirConv: () => this.doExcluirConv(),
       showModalFooter: !!S.modal && S.modal !== 'conectar_wpp' && S.modal !== 'config_canal' && S.modal !== 'nova_conversa' && S.modal !== 'renomear_conv' && S.modal !== 'add_cliente_conv' && S.modal !== 'excluir_conv' && S.modal !== 'novo_agendamento' && S.modal !== 'gcal_config',
       agenteIsEdit: !!(S.form && S.form.id),
@@ -5164,12 +5220,18 @@ class Component extends DCLogic {
             descricao: sc.descricao || 'Sem descrição cadastrada.',
             imagensList: (sc.imagens || []).map((url, i) => ({ url, key: sc.id + '_' + i })),
             hasImagens: (sc.imagens || []).length > 0,
+            hasDrive: !!sc.driveFolderId,
+            driveUrl: sc.driveFolderId ? ('https://drive.google.com/drive/folders/' + sc.driveFolderId) : '',
             onEdit: () => this.openSubcategoriaModal(cat.id, sc),
             onDelete: () => this.deleteSubcategoria(cat.id, sc.id),
           })),
         };
       });
       vm.catalogoEmpty = filtradas.length === 0;
+      vm.onDriveConfig = () => this.openDriveConfig();
+      vm.driveOn = !!(S.driveApiKey && S.driveApiKey.trim());
+      vm.driveStatusStyle = { display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', fontWeight: 600, padding: '7px 12px', borderRadius: '9px', background: vm.driveOn ? 'var(--color-background-success)' : 'var(--color-background-secondary)', color: vm.driveOn ? 'var(--color-text-success)' : 'var(--color-text-secondary)', border: '1px solid var(--color-border-tertiary)', cursor: 'pointer' };
+      vm.driveStatusText = vm.driveOn ? 'Google Drive: conectado' : 'Google Drive: configurar';
     }
 
     // ===== ATENDIMENTO =====

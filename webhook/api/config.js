@@ -19,7 +19,7 @@ module.exports = async (req, res) => {
 
   if (req.method === 'GET') {
     const c = await readConfig();
-    return res.status(200).json({ ok: true, configured: !!c, config: c ? { model: c.model, temperature: c.temperature, enabled: c.enabled, hasKey: !!c.geminiKey, promptLen: (c.prompt || '').length } : null });
+    return res.status(200).json({ ok: true, configured: !!c, config: c ? { model: c.model, temperature: c.temperature, enabled: c.enabled, hasKey: !!c.geminiKey, hasDriveKey: !!c.driveApiKey, promptLen: (c.prompt || '').length } : null });
   }
   if (req.method !== 'POST') return res.status(405).json({ error: 'method not allowed' });
 
@@ -32,6 +32,7 @@ module.exports = async (req, res) => {
       temperature: (body.temperature != null ? Number(body.temperature) : 0.5),
       welcome: body.welcome || '',
       enabled: body.enabled !== false,
+      driveApiKey: body.driveApiKey || '',
       updatedAt: Date.now(),
     };
     const okWrite = await writeConfig(cfg);

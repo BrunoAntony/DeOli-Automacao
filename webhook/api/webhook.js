@@ -131,7 +131,14 @@ module.exports = async (req, res) => {
       replied = true;
       if (wantsImages) {
         const sub = findSubcategoria(catalogo, parsed.subcategoriaId);
-        const imgs = (sub && Array.isArray(sub.imagens)) ? sub.imagens.slice(0, 3) : [];
+        let imgs = [];
+        if (sub && sub.driveFolderId && cfg.driveApiKey) {
+          const files = await fetchDriveFolderImages(sub.driveFolderId, cfg.driveApiKey);
+          for (const f of files.slice(0, 3)) {
+            try { imgs.push(await downloadDriveFile(f.id)); } catch (e) { console.error('[drive] falha ao baixar arquivo:', f.id, e.message || e); }
+          }
+        }
+        if (!imgs.length && sub && Array.isArray(sub.imagens)) imgs = sub.imagens.slice(0, 3);
         for (const dataUrl of imgs) {
           await uazapiSendImage(from, dataUrl);
           imagesSent++;
@@ -159,14 +166,37 @@ function buildCatalogoPrompt(catalogo) {
   if (!Array.isArray(catalogo) || !catalogo.length) return '';
   const lines = [];
   for (const cat of catalogo) {
-    const subs = (cat.subcategorias || []).filter((s) => Array.isArray(s.imagens) && s.imagens.length);
+    const subs = (cat.subcategorias || []).filter((s) => (Array.isArray(s.imagens) && s.imagens.length) || s.driveFolderId);
     if (!subs.length) continue;
     lines.push('- ' + (cat.nome || 'Categoria'));
     for (const sub of subs) {
-      lines.push('  - ' + (sub.nome || 'Subcategoria') + ' [id: ' + sub.id + ']: ' + (sub.descricao || 'sem descrição') + ' (' + sub.imagens.length + ' foto(s))');
+      const qtd = (sub.imagens && sub.imagens.length) ? (sub.imagens.length + ' foto(s))') : 'fotos no Google Drive)';
+      lines.push('  - ' + (sub.nome || 'Subcategoria') + ' [id: ' + sub.id + ']: ' + (sub.descricao || 'sem descrição') + ' (' + qtd);
     }
   }
   return lines.join('\n');
+}
+
+// busca as imagens de uma pasta pública do Google Drive (compartilhada como "Qualquer pessoa com o link")
+async function fetchDriveFolderImages(folderId, apiKey) {
+  if (!folderId || !apiKey) return [];
+  try {
+    const q = encodeURIComponent("'" + folderId + "' in parents and mimeType contains 'image/' and trashed = false");
+    const url = 'https://www.googleapis.com/drive/v3/files?q=' + q + '&fields=files(id,name)&pageSize=10&key=' + encodeURIComponent(apiKey);
+    const r = await fetch(url);
+    if (!r.ok) { console.error('[drive] falha ao listar pasta:', r.status, await r.text()); return []; }
+    const data = await r.json();
+    return Array.isArray(data.files) ? data.files : [];
+  } catch (e) { console.error('[drive] erro ao listar pasta:', e.message || e); return []; }
+}
+
+async function downloadDriveFile(fileId) {
+  const url = 'https://drive.google.com/uc?export=download&id=' + encodeURIComponent(fileId);
+  const r = await fetch(url);
+  if (!r.ok) throw new Error('Falha ao baixar do Drive: ' + r.status);
+  const buf = await r.arrayBuffer();
+  const contentType = r.headers.get('content-type') || 'image/jpeg';
+  return 'data:' + contentType + ';base64,' + Buffer.from(buf).toString('base64');
 }
 
 function findSubcategoria(catalogo, subId) {
