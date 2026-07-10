@@ -1676,7 +1676,7 @@
 <x-dc>
 <helmet>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/dist/tabler-icons.min.css">
-<script>window.__VERSATIL_BUILD__ = "1783682825173";</script>
+<script>window.__VERSATIL_BUILD__ = "1783688184741";</script>
 <style>
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;height:100%;}
@@ -3710,7 +3710,7 @@ class Component extends DCLogic {
   }
   toggleSom() { this.setState(s => ({ somOn: !s.somOn }), () => this.toast('info', this.state.somOn ? 'Notificações sonoras ativadas' : 'Notificações sonoras desativadas')); }
   openConv(id) {
-    this.setState(s => ({ activeConv: id, conversas: s.conversas.map(c => c.id === id ? Object.assign({}, c, { unread: 0 }) : c) }), () => { this.persistCA(); this.scrollThreadBottom(true); });
+    this.setState(s => ({ activeConv: id, conversas: s.conversas.map(c => c.id === id ? Object.assign({}, c, { unread: 0, lastReadTs: c.ts || 0 }) : c) }), () => { this.persistCA(); this.scrollThreadBottom(true); });
     const c = (this.state.conversas || []).find(x => x.id === id);
     if (c && c.source === 'wpp' && c.chatid) this.loadWppMessages(c);
   }
@@ -3767,6 +3767,7 @@ class Component extends DCLogic {
         const locais = (s.conversas || []).filter(c => c.source !== 'wpp');
         // preserva mensagens já carregadas de chats wpp
         const prevById = {}; (s.conversas || []).forEach(c => { if (c.source === 'wpp') prevById[c.id] = c; });
+        const activeId = this.state.activeConv;
         const merged = mapped.map(m => {
           const prev = prevById[m.id];
           if (!prev) return m;
@@ -3774,6 +3775,14 @@ class Component extends DCLogic {
           if (prev._msgsLoaded) { keep.msgs = prev.msgs; keep._msgsLoaded = true; }
           // uma vez que o operador tocou na conversa, a decisão local manda até devolver/finalizar
           if (prev._localCtrl) { keep.humano = prev.humano; keep.iaAtiva = prev.iaAtiva; keep.resolvida = prev.resolvida; keep._localCtrl = true; keep.setor = prev.setor; }
+          // o WhatsApp/uazapi nunca sabe que a mensagem foi vista aqui no app — sem isso,
+          // toda sincronização "ressuscitava" o contador de não lidas mesmo já lida.
+          if (m.id === activeId) {
+            keep.unread = 0; keep.lastReadTs = m.ts;
+          } else if (prev.lastReadTs != null) {
+            keep.lastReadTs = prev.lastReadTs;
+            if (m.ts <= prev.lastReadTs) keep.unread = 0;
+          }
           return Object.assign({}, m, keep);
         });
         return { conversas: [...merged, ...locais], wppSyncing: false };
