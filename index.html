@@ -1676,7 +1676,7 @@
 <x-dc>
 <helmet>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/dist/tabler-icons.min.css">
-<script>window.__VERSATIL_BUILD__ = "1783891247631";</script>
+<script>window.__VERSATIL_BUILD__ = "1783892116871";</script>
 <style>
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;height:100%;}
@@ -4223,8 +4223,18 @@ class Component extends DCLogic {
   async doExcluirConv() {
     const id = this.state.form && this.state.form._convId;
     const conv = (this.state.conversas || []).find(c => c.id === id);
+    const telefone = conv ? this.convPhone(conv) : '';
     // remove da lista local imediatamente
     this.setState(s => ({ conversas: s.conversas.filter(c => c.id !== id), activeConv: s.activeConv === id ? null : s.activeConv, modal: null, form: {} }), this.persistCA);
+    // remove também a linha no Supabase — syncConversas só faz upsert das conversas que
+    // ainda existem em state.conversas, então sem isto a conversa "excluída" nunca saía do
+    // banco e voltava sozinha ao recarregar a página ou abrir em outro dispositivo
+    if (telefone) {
+      this.syncWithRetry(async () => {
+        const r = await fetch(this.SUPA_URL + '/rest/v1/conversas?telefone=eq.' + encodeURIComponent(telefone), { method: 'DELETE', headers: this.headers({ Prefer: 'return=minimal' }) });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+      }, 'exclusão da conversa');
+    }
     // remove também do WhatsApp/uazapi
     if (conv && conv.source === 'wpp' && conv.chatid) {
       const ch = this.wppConnectedChannel();
