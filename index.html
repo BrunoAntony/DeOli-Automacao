@@ -1676,7 +1676,7 @@
 <x-dc>
 <helmet>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/dist/tabler-icons.min.css">
-<script>window.__VERSATIL_BUILD__ = "1783892116871";</script>
+<script>window.__VERSATIL_BUILD__ = "1783892450057";</script>
 <style>
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;height:100%;}
@@ -4243,7 +4243,7 @@ class Component extends DCLogic {
           await this.uaFetch(this.uaBaseFor(ch.uazapi), '/chat/delete', 'POST', ch.uazapi.instanceToken, { number: conv.chatid, deleteChatWhatsApp: true, deleteChatDB: true, deleteMessagesDB: true });
           this.toast('success', 'Conversa excluída do WhatsApp');
           return;
-        } catch (e) { this.toast('error', 'Removida da lista, mas falhou no WhatsApp: ' + this.uaFriendly(e)); return; }
+        } catch (e) { this.toast('error', 'Conversa apagada do app, mas não foi possível apagar no WhatsApp: ' + this.uaFriendly(e)); return; }
       }
     }
     this.toast('info', 'Conversa excluída');
@@ -4742,7 +4742,14 @@ class Component extends DCLogic {
     });
     const txt = await res.text();
     let data = null; try { data = txt ? JSON.parse(txt) : null; } catch (e) { data = { raw: txt }; }
-    if (!res.ok) throw new Error((data && (data.error || data.message)) || (res.status + ' ' + (method || 'GET') + ' ' + path));
+    // a uazapi costuma responder erro como { error: true, message: "..." } — "error" aqui é só um
+    // booleano (não uma mensagem); pegar ele antes de "message" fazia o toast mostrar só "true"
+    if (!res.ok) {
+      const msg = (data && typeof data.message === 'string' && data.message)
+        || (data && typeof data.error === 'string' && data.error)
+        || (res.status + ' ' + (method || 'GET') + ' ' + path);
+      throw new Error(msg);
+    }
     return data || {};
   }
   openWpp(canalId) {
