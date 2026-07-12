@@ -1676,7 +1676,7 @@
 <x-dc>
 <helmet>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/dist/tabler-icons.min.css">
-<script>window.__VERSATIL_BUILD__ = "1783889404429";</script>
+<script>window.__VERSATIL_BUILD__ = "1783891247631";</script>
 <style>
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;height:100%;}
@@ -4202,7 +4202,9 @@ class Component extends DCLogic {
       || ags.find(a => a.ativo && a.papel === 'atendimento')
       || ags.find(a => a.ativo);
   }
-  assumirConv(id, ev) { if (ev) ev.stopPropagation(); this.setState(s => ({ conversas: s.conversas.map(c => c.id === id ? Object.assign({}, c, { humano: true, iaAtiva: false, _localCtrl: true }) : c), activeConv: id }), () => { this.persistCA(); this.toast('success', 'Você assumiu o atendimento'); }); }
+  assumirConv(id, ev) { if (ev) ev.stopPropagation(); const quem = this.currentUsername(); this.setState(s => ({ conversas: s.conversas.map(c => c.id === id ? Object.assign({}, c, { humano: true, iaAtiva: false, _localCtrl: true, assumidoPor: quem }) : c), activeConv: id }), () => { this.persistCA(); this.toast('success', 'Você assumiu o atendimento'); }); }
+  currentUsername() { return (this.state.authSession && this.state.authSession.username) || ''; }
+  nomeUsuario(u) { return u ? (u.charAt(0).toUpperCase() + u.slice(1)) : ''; }
   // --- ações sobre a conversa selecionada ---
   convPhone(conv) { return String((conv && (conv.telefone || conv.chatid)) || '').replace(/@.*/, '').replace(/[^0-9+]/g, ''); }
   openRenomearConv(id) { const c = (this.state.conversas || []).find(x => x.id === id); this.setState({ convMenuOpen: false, modal: 'renomear_conv', form: { _convId: id, nome: (c && c.nome) || '' } }); }
@@ -4479,7 +4481,8 @@ class Component extends DCLogic {
     if (replyTo) baseMsg.replyTo = replyTo;
     if (media) { baseMsg.type = media.type; baseMsg.url = media.url; baseMsg.fileName = media.fileName; baseMsg.fileSize = media.fileSize; }
     // envio otimista: mostra a mensagem imediatamente com status "enviando"
-    this.setState(s => ({ conversas: s.conversas.map(c => c.id === convId ? Object.assign({}, c, { humano: true, iaAtiva: false, _localCtrl: true, msgs: [...c.msgs, baseMsg] }) : c), chatDraft: media ? s.chatDraft : '', chatReplyTo: null, emojiOpen: false, attachMenuOpen: false }), () => { this.persistCA(); this.scrollThreadBottom(true); });
+    const quem = conv && conv.humano && conv.assumidoPor ? conv.assumidoPor : this.currentUsername();
+    this.setState(s => ({ conversas: s.conversas.map(c => c.id === convId ? Object.assign({}, c, { humano: true, iaAtiva: false, _localCtrl: true, assumidoPor: quem, msgs: [...c.msgs, baseMsg] }) : c), chatDraft: media ? s.chatDraft : '', chatReplyTo: null, emojiOpen: false, attachMenuOpen: false }), () => { this.persistCA(); this.scrollThreadBottom(true); });
     // se for conversa do WhatsApp e houver canal conectado, envia de verdade
     if (conv && conv.source === 'wpp' && conv.chatid) {
       const ch = this.wppConnectedChannel();
@@ -5836,7 +5839,7 @@ class Component extends DCLogic {
           // selo compacto ao lado do nome: quem está atendendo agora (agente de IA pelo nome, ou um humano)
           handlerShow: handlerIsIa || handlerIsHumano,
           handlerIcon: handlerIsIa ? 'ti-robot' : 'ti-headset',
-          handlerLabel: handlerIsIa ? ((handlerAgente && handlerAgente.nome) || 'IA') : 'Atendente',
+          handlerLabel: handlerIsIa ? ((handlerAgente && handlerAgente.nome) || 'IA') : (this.nomeUsuario(c.assumidoPor) || 'Atendente'),
           handlerStyle: {
             display: 'inline-flex', alignItems: 'center', gap: '4px', flexShrink: 0, maxWidth: '104px',
             background: handlerIsIa ? 'rgba(109,40,217,.12)' : 'var(--color-background-info)',
@@ -5898,7 +5901,7 @@ class Component extends DCLogic {
         // selo ao lado do nome, no topo da conversa: quem está atendendo agora
         vm.convHandlerShow = !conv.resolvida;
         vm.convHandlerIcon = humanoAtendendo ? 'ti-headset' : 'ti-robot';
-        vm.convHandlerLabel = humanoAtendendo ? 'Atendente' : ((agAtend && agAtend.nome) || 'IA');
+        vm.convHandlerLabel = humanoAtendendo ? (this.nomeUsuario(conv.assumidoPor) || 'Atendente') : ((agAtend && agAtend.nome) || 'IA');
         vm.convHandlerStyle = {
           display: 'inline-flex', alignItems: 'center', gap: '4px', flexShrink: 0, maxWidth: '140px',
           whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
