@@ -1676,7 +1676,7 @@
 <x-dc>
 <helmet>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/dist/tabler-icons.min.css">
-<script>window.__VERSATIL_BUILD__ = "1783732040255";</script>
+<script>window.__VERSATIL_BUILD__ = "1783878735738";</script>
 <style>
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;height:100%;}
@@ -3088,8 +3088,10 @@ POLÍTICAS: trocas em até 7 dias com nota." style="padding:14px 15px;border:1px
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
                   <span style="font-size:13px;font-weight:600;color:var(--color-text-secondary);">Imagens de modelos</span>
                   <label style="display:inline-flex;align-items:center;gap:6px;background:var(--color-background-secondary);border:1px solid var(--color-border-tertiary);border-radius:8px;padding:8px 12px;font-size:12.5px;font-weight:600;cursor:pointer;">
-                    <i class="ti ti-photo-plus" style="font-size:16px;"></i>Adicionar imagens
-                    <input type="file" accept="image/*" multiple="{{ true }}" onChange="{{ onCatalogoImageChosen }}" style="display:none;">
+                    <sc-if value="{{ catalogoUploading }}" hint-placeholder-val="{{ false }}"><i class="ti ti-loader-2" style="font-size:16px;animation:spin 1s linear infinite;"></i></sc-if>
+                    <sc-if value="{{ catalogoNotUploading }}" hint-placeholder-val="{{ true }}"><i class="ti ti-photo-plus" style="font-size:16px;"></i></sc-if>
+                    {{ catalogoUploadLabel }}
+                    <input type="file" accept="image/*" multiple="{{ true }}" onChange="{{ onCatalogoImageChosen }}" disabled="{{ catalogoUploading }}" style="display:none;">
                   </label>
                 </div>
                 <div style="font-size:12px;color:var(--color-text-secondary);line-height:1.5;margin-bottom:10px;">Selecione a tag de estilo de cada imagem (ex: Clássico, Floral, Minimalista) — assim o agente de IA envia a foto certa quando o cliente pedir um estilo específico. Cadastre novas tags no menu "Tags de estilo" no topo da página Produtos.</div>
@@ -3567,6 +3569,7 @@ class Component extends DCLogic {
     catalogoAberto: {},
     catalogoTags: [],
     catalogoTagInput: '',
+    catalogoUploading: false,
     catalogoPickerSel: [],
     catalogoPickerSearch: '',
     catalogoPickerAberto: {},
@@ -3922,21 +3925,56 @@ class Component extends DCLogic {
     if (m2) return m2[1];
     return v;
   }
+  // imagens do catálogo vão direto pro Supabase Storage (bucket "catalogo") em vez de virar
+  // base64 dentro do JSON — um catálogo com várias fotos ficava com dezenas de MB, o que fazia
+  // o carregamento falhar silenciosamente em conexões mais lentas (sumia em alguns dispositivos).
   onCatalogoImageChosen = (e) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
-    Promise.all(files.map(file => new Promise(resolve => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
-      reader.readAsDataURL(file);
-    }))).then(dataUrls => {
-      const novas = dataUrls.map(url => ({ url, tag: '' }));
-      this.setState(s => ({ form: Object.assign({}, s.form, { imagens: [...(s.form.imagens || []), ...novas] }) }));
+    const f = this.state.form || {};
+    const slug = (s) => (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    const folder = (slug(f._catId ? String(f._catId) : 'cat') + '/' + (slug(f.nome) || 'produto'));
+    this.setState({ catalogoUploading: true });
+    Promise.all(files.map(file => this.uploadCatalogoImage(file, folder))).then(urls => {
+      const novas = urls.filter(Boolean).map(url => ({ url, tag: '' }));
+      this.setState(s => ({ form: Object.assign({}, s.form, { imagens: [...(s.form.imagens || []), ...novas] }), catalogoUploading: false }));
+      if (novas.length < files.length) this.toast('error', (files.length - novas.length) + ' imagem(ns) falharam ao enviar');
     });
     e.target.value = '';
   };
+  async uploadCatalogoImage(file, folder) {
+    try {
+      const ext = ((file.name || '').split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+      const path = folder + '/' + Date.now() + '_' + Math.random().toString(36).slice(2, 8) + '.' + ext;
+      const token = (this.state.authSession && this.state.authSession.access_token) || this.SUPA_KEY;
+      const r = await fetch(this.SUPA_URL + '/storage/v1/object/catalogo/' + path, {
+        method: 'POST',
+        headers: { apikey: this.SUPA_KEY, Authorization: 'Bearer ' + token, 'Content-Type': file.type || 'application/octet-stream' },
+        body: file,
+      });
+      if (!r.ok) throw new Error('Falha ao enviar imagem (' + r.status + ')');
+      return this.SUPA_URL + '/storage/v1/object/public/catalogo/' + path;
+    } catch (e) {
+      console.warn('[catalogo] falha ao enviar imagem:', e.message || e);
+      return null;
+    }
+  }
   removeCatalogoImage(idx) {
+    const f = this.state.form || {};
+    const img = (f.imagens || [])[idx];
     this.setState(s => ({ form: Object.assign({}, s.form, { imagens: (s.form.imagens || []).filter((_, i) => i !== idx) }) }));
+    const url = img && img.url;
+    const marker = '/storage/v1/object/public/catalogo/';
+    if (url && url.includes(marker)) this.deleteCatalogoStorageFile(url.split(marker)[1]);
+  }
+  async deleteCatalogoStorageFile(path) {
+    try {
+      const token = (this.state.authSession && this.state.authSession.access_token) || this.SUPA_KEY;
+      await fetch(this.SUPA_URL + '/storage/v1/object/catalogo/' + path, {
+        method: 'DELETE',
+        headers: { apikey: this.SUPA_KEY, Authorization: 'Bearer ' + token },
+      });
+    } catch (e) { console.warn('[catalogo] falha ao apagar imagem do storage:', e.message || e); }
   }
   setCatalogoImageTag(idx, tag) {
     this.setState(s => ({ form: Object.assign({}, s.form, { imagens: (s.form.imagens || []).map((im, i) => i === idx ? Object.assign({}, im, { tag }) : im) }) }));
@@ -5348,6 +5386,9 @@ class Component extends DCLogic {
       formItens: (S.form.itens || []).map((it, idx) => ({ idx, produto: it.produto, quantidade: it.quantidade, preco: it.preco, subtotalFmt: this.fmtMoney(this.num(it.quantidade) * this.num(it.preco)) })),
       formTotalFmt: this.fmtMoney((S.form.itens || []).reduce((a, it) => a + this.num(it.quantidade) * this.num(it.preco), 0)),
       tipoProdutoImagens: (S.form.imagens || []).map((im, idx) => ({ url: (im && im.url) || '', tag: (im && im.tag) || '', idx, onRemove: () => this.removeCatalogoImage(idx), onTag: (e) => this.setCatalogoImageTag(idx, e.target.value) })),
+      catalogoUploading: !!S.catalogoUploading,
+      catalogoNotUploading: !S.catalogoUploading,
+      catalogoUploadLabel: S.catalogoUploading ? 'Enviando…' : 'Adicionar imagens',
       catalogoTagOptions: S.catalogoTags || [],
       tipoProdutoHasImagens: (S.form.imagens || []).length > 0,
       onCatalogoImageChosen: this.onCatalogoImageChosen,
