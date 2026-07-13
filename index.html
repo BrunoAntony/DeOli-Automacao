@@ -1676,7 +1676,7 @@
 <x-dc>
 <helmet>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/dist/tabler-icons.min.css">
-<script>window.__VERSATIL_BUILD__ = "1783955565301";</script>
+<script>window.__VERSATIL_BUILD__ = "1783959930135";</script>
 <style>
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;height:100%;}
@@ -2839,11 +2839,8 @@ input:focus,select:focus,textarea:focus{outline:2px solid #3b82f6;outline-offset
                   </label>
                 </div>
                 <div style="display:flex;flex-direction:column;gap:12px;border:1px solid var(--color-border-tertiary);border-radius:12px;padding:18px;background:var(--color-background-primary);">
-                  <div style="font-weight:700;font-size:14px;display:flex;align-items:center;gap:7px;"><i class="ti ti-key" style="font-size:16px;color:#6d28d9;"></i>Chaves de API</div>
-                  <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--color-text-secondary);">Google AI (Gemini)
-                    <input name="apiKey" value="{{ aeForm.gemini.apiKey }}" onInput="{{ onGeminiChange }}" placeholder="AIza..." style="padding:11px 13px;border:1px solid var(--color-border-tertiary);border-radius:9px;background:var(--color-background-secondary);font-size:13.5px;">
-                  </label>
-                  <div style="font-size:12px;color:var(--color-text-secondary);display:flex;align-items:flex-start;gap:7px;"><i class="ti ti-info-circle" style="font-size:14px;flex-shrink:0;margin-top:1px;"></i>Anthropic e OpenAI ficam disponíveis ao selecionar o provedor correspondente. Este agente usa Gemini via uazapi.</div>
+                  <div style="font-weight:700;font-size:14px;display:flex;align-items:center;gap:7px;"><i class="ti ti-key" style="font-size:16px;color:#6d28d9;"></i>Chave de API</div>
+                  <div style="font-size:12px;color:var(--color-text-secondary);display:flex;align-items:flex-start;gap:7px;"><i class="ti ti-info-circle" style="font-size:14px;flex-shrink:0;margin-top:1px;"></i>A chave do Gemini agora é única para todos os agentes e fica configurada só no servidor (variável GEMINI_API_KEY na Vercel) — não é mais preenchida aqui no app.</div>
                   <div style="display:flex;gap:10px;flex-wrap:wrap;">
                     <button onClick="{{ aeTestar }}" disabled="{{ aeTestando }}" style="display:inline-flex;align-items:center;gap:7px;background:#6d28d9;color:#fff;border:none;border-radius:9px;padding:10px 15px;font-weight:600;font-size:13.5px;cursor:pointer;"><i class="ti ti-flask" style="font-size:16px;"></i>Testar agente agora</button>
                     <button onClick="{{ aeRestaurar }}" style="display:inline-flex;align-items:center;gap:7px;background:var(--color-background-tertiary);color:var(--color-text-primary);border:1px solid var(--color-border-tertiary);border-radius:9px;padding:10px 15px;font-weight:600;font-size:13.5px;cursor:pointer;"><i class="ti ti-rotate" style="font-size:16px;"></i>Restaurar configurações padrão</button>
@@ -2901,6 +2898,12 @@ input:focus,select:focus,textarea:focus{outline:2px solid #3b82f6;outline-offset
                       <button onClick="{{ ft.onToggle }}" style="{{ ft.toggleStyle }}"><span style="{{ ft.knobStyle }}"></span></button>
                     </div>
                   </sc-for>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:8px;padding:15px 17px;border:1px solid var(--color-border-tertiary);border-radius:12px;background:var(--color-background-primary);">
+                  <div style="display:flex;align-items:center;justify-content:space-between;"><label style="font-weight:700;font-size:13.5px;">Tempo de resposta</label><span style="font-size:13px;font-weight:700;color:#6d28d9;">{{ aeRespostaDelayLabel }}</span></div>
+                  <p style="margin:0;font-size:12.5px;color:var(--color-text-secondary);line-height:1.5;">O agente espera esse tempo antes de responder, para parecer mais natural (não responder na mesma hora).</p>
+                  <input type="range" name="respostaDelay" min="2" max="10" step="1" value="{{ aeForm.respostaDelay }}" onInput="{{ onAgentNum }}" style="width:100%;accent-color:#6d28d9;">
+                  <div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--color-text-secondary);"><span>2s</span><span>10s</span></div>
                 </div>
                 <sc-if value="{{ aeShowNumeroHumano }}" hint-placeholder-val="{{ false }}">
                   <div style="display:flex;flex-direction:column;gap:8px;padding:15px 17px;border:1px solid var(--color-border-tertiary);border-radius:12px;background:var(--color-background-primary);">
@@ -3881,10 +3884,10 @@ class Component extends DCLogic {
     // conversas NUNCA vem do config compartilhado (fonte real: WhatsApp/localStorage) — evita apagar conversas ao sincronizar
     if (shared) { const localConv = saved && saved.conversas; saved = Object.assign({}, saved || {}, shared); if (localConv) saved.conversas = localConv; }
     const defAgentes = [
-      { id: 'ag1', nome: 'Atendente Virtual', icon: 'ti-headset', cor: '#3b82f6', ativo: true, papel: 'atendimento', desc: 'Responde dúvidas de clientes automaticamente com base no histórico da conversa.', tom: 'Cordial e objetivo', modelo: 'Claude Haiku', gatilho: 'Mensagem recebida', gemini: { apiKey: '', model: 'gemini-flash-latest' }, canais: [] },
-      { id: 'ag2', nome: 'Qualificador de Leads', icon: 'ti-filter-check', cor: '#8b5cf6', ativo: false, papel: 'vendas', desc: 'Identifica intenção de compra e prioriza as conversas mais quentes.', tom: 'Consultivo', modelo: 'Claude Haiku', gatilho: 'Nova conversa', gemini: { apiKey: '', model: 'gemini-flash-latest' }, canais: [] },
-      { id: 'ag3', nome: 'Cobrança Amigável', icon: 'ti-cash', cor: '#f59e0b', ativo: false, papel: 'financeiro', desc: 'Envia lembretes de pagamento e negocia prazos de forma educada.', tom: 'Firme e cordial', modelo: 'Claude Haiku', gatilho: 'Fatura vencida', gemini: { apiKey: '', model: 'gemini-flash-latest' }, canais: [] },
-      { id: 'ag4', nome: 'FAQ Financeiro', icon: 'ti-help-circle', cor: '#10b981', ativo: true, papel: 'suporte', desc: 'Responde perguntas frequentes sobre pedidos, prazos, produtos e preços.', tom: 'Didático', modelo: 'Claude Haiku', gatilho: 'Palavra-chave', gemini: { apiKey: '', model: 'gemini-flash-latest' }, canais: [] },
+      { id: 'ag1', nome: 'Atendente Virtual', icon: 'ti-headset', cor: '#3b82f6', ativo: true, papel: 'atendimento', desc: 'Responde dúvidas de clientes automaticamente com base no histórico da conversa.', tom: 'Cordial e objetivo', modelo: 'Claude Haiku', gatilho: 'Mensagem recebida', gemini: { model: 'gemini-flash-latest' }, canais: [] },
+      { id: 'ag2', nome: 'Qualificador de Leads', icon: 'ti-filter-check', cor: '#8b5cf6', ativo: false, papel: 'vendas', desc: 'Identifica intenção de compra e prioriza as conversas mais quentes.', tom: 'Consultivo', modelo: 'Claude Haiku', gatilho: 'Nova conversa', gemini: { model: 'gemini-flash-latest' }, canais: [] },
+      { id: 'ag3', nome: 'Cobrança Amigável', icon: 'ti-cash', cor: '#f59e0b', ativo: false, papel: 'financeiro', desc: 'Envia lembretes de pagamento e negocia prazos de forma educada.', tom: 'Firme e cordial', modelo: 'Claude Haiku', gatilho: 'Fatura vencida', gemini: { model: 'gemini-flash-latest' }, canais: [] },
+      { id: 'ag4', nome: 'FAQ Financeiro', icon: 'ti-help-circle', cor: '#10b981', ativo: true, papel: 'suporte', desc: 'Responde perguntas frequentes sobre pedidos, prazos, produtos e preços.', tom: 'Didático', modelo: 'Claude Haiku', gatilho: 'Palavra-chave', gemini: { model: 'gemini-flash-latest' }, canais: [] },
     ];
     const defConversas = [];
     const DEMO_IDS = ['cv1', 'cv2', 'cv3'];
@@ -3902,7 +3905,7 @@ class Component extends DCLogic {
     // remove conversas de demonstração salvas anteriormente
     const savedConversas = baseConversas.filter(c => DEMO_IDS.indexOf(c.id) < 0 && c.nome !== 'Bruno Antony' && c.nome !== 'Vitor Gus' && c.nome !== 'Salão Maria Flor');
     this.setState({
-      agentes: ((saved && saved.agentes) || defAgentes).map(a => { a = Object.assign({}, a); a.gemini = Object.assign({ apiKey: '', model: 'gemini-flash-latest' }, a.gemini || {}); if (/gemini-(1\.5|2\.0)/.test(a.gemini.model || '')) a.gemini.model = 'gemini-flash-latest'; if (/gemini-1\.5/.test(a.forcarModelo || '')) a.forcarModelo = ''; return a; }),
+      agentes: ((saved && saved.agentes) || defAgentes).map(a => { a = Object.assign({}, a); a.gemini = Object.assign({ model: 'gemini-flash-latest' }, a.gemini || {}); if (/gemini-(1\.5|2\.0)/.test(a.gemini.model || '')) a.gemini.model = 'gemini-flash-latest'; if (/gemini-1\.5/.test(a.forcarModelo || '')) a.forcarModelo = ''; return a; }),
       conversas: savedConversas,
       agendamentos: (saved && saved.agendamentos) || [],
       gcalUrl: (saved && saved.gcalUrl) || '',
@@ -4269,8 +4272,6 @@ class Component extends DCLogic {
   async iaCheckAgendamento(conv, agent) {
     try {
       if (!conv || !agent) return;
-      const gk = agent.gemini && agent.gemini.apiKey && agent.gemini.apiKey.trim();
-      if (!gk) return;
       // evita reprocessar o mesmo ponto da conversa
       this._agCheck = this._agCheck || {};
       if (this._agCheck[conv.id] === conv.msgs.length) return;
@@ -4315,8 +4316,6 @@ class Component extends DCLogic {
   async iaCheckFunil(conv, agent) {
     try {
       if (!conv || !agent) return;
-      const gk = agent.gemini && agent.gemini.apiKey && agent.gemini.apiKey.trim();
-      if (!gk) return;
       const telefone = this.convPhone(conv);
       if (!telefone) return;
       const history = conv.msgs.map(m => (m.from === 'cliente' ? 'Cliente' : 'Empresa') + ': ' + (m.text || ('[' + (m.type || 'mídia') + ']'))).join('\n');
@@ -4721,6 +4720,7 @@ class Component extends DCLogic {
       desc: '', tom: 'Cordial e objetivo', gatilho: 'Mensagem recebida',
       avatarUrl: '', promptSistema: prompt.trim(), boasVindas: a.boasVindas || 'Olá {user-name}! 👋 Como posso ajudar você hoje?',
       temperatura: (a.temperatura != null ? a.temperatura : 0.5),
+      respostaDelay: (a.respostaDelay != null ? a.respostaDelay : 3),
       forcarModelo: a.forcarModelo || '',
       regras: a.regras || '', voz: a.voz || { ativa: false, provedor: 'ElevenLabs', voiceId: '' },
       ferramentas: a.ferramentas || { agenda: false, estoque: true, pedidos: true, humano: true },
@@ -4729,7 +4729,7 @@ class Component extends DCLogic {
     }, a, {
       promptSistema: prompt.trim(),
       respostaVia: 'webhook',
-      gemini: (function (g) { g = Object.assign({ apiKey: '', model: 'gemini-flash-latest' }, g || {}); if (/gemini-(1\.5|2\.0)/.test(g.model || '')) g.model = 'gemini-flash-latest'; return g; })(a.gemini),
+      gemini: (function (g) { g = Object.assign({ model: 'gemini-flash-latest' }, g || {}); if (/gemini-(1\.5|2\.0)/.test(g.model || '')) g.model = 'gemini-flash-latest'; return g; })(a.gemini),
       forcarModelo: (/gemini-1\.5/.test(a.forcarModelo || '') ? '' : (a.forcarModelo || '')),
       canais: (a.canais || []).slice(),
     });
@@ -4753,8 +4753,6 @@ class Component extends DCLogic {
   closeAgentEditor() { this.setState({ agentEditor: false, form: {} }); }
   async testarAgente() {
     const f = this.state.form;
-    const key = (f.gemini && f.gemini.apiKey || '').trim();
-    if (!key) { this.setState({ agentTestResult: 'Nenhuma chave Gemini preenchida acima.', agentTestOk: false }); return; }
     this.setState({ agentTestando: true, agentTestResult: '' });
     try {
       const out = await this.geminiComplete(f, 'Responda apenas: OK', 'Teste de conexão. Responda apenas: OK');
@@ -4765,7 +4763,7 @@ class Component extends DCLogic {
       let dica = '';
       if (/quota|free_tier|rate.?limit|limit:\s*0|exceeded/i.test(m)) dica = ' → Sua conta não tem cota para este modelo (o gemini-2.5-pro exige plano pago). Troque o Modelo para gemini-flash-latest ou gemini-2.5-flash (gratuito) e salve.';
       else if (/high demand|overloaded|temporar|try again|503/i.test(m)) dica = ' → O modelo está sobrecarregado no momento (temporário). Tente novamente em instantes.';
-      else if (/API key not valid|API_KEY_INVALID|invalid/i.test(m)) dica = ' → A chave Gemini está inválida. Gere uma nova em aistudio.google.com/apikey.';
+      else if (/API key not valid|API_KEY_INVALID|invalid/i.test(m)) dica = ' → A chave Gemini configurada no servidor está inválida. Gere uma nova em aistudio.google.com/apikey e atualize a variável GEMINI_API_KEY na Vercel.';
       else if (/referer|referrer|blocked|forbidden|403/i.test(m)) dica = ' → A chave tem restrição de site (referrer). Crie uma chave SEM restrição de referrer.';
       else if (/not found|404|model/i.test(m)) dica = ' → Modelo incorreto. Use gemini-flash-latest ou gemini-2.5-flash.';
       else if (/Failed to fetch|NetworkError|CORS|load failed/i.test(m)) dica = ' → Bloqueio de rede/CORS.';
@@ -4778,7 +4776,7 @@ class Component extends DCLogic {
       promptSistema: 'Você é um assistente de atendimento da empresa Versatil (gestão para salões e comércio). Seja cordial, objetivo e prestativo. Responda dúvidas sobre produtos, pedidos, prazos e preços. Se não souber, ofereça encaminhar para um atendente humano.',
       tom: 'Cordial e objetivo', boasVindas: 'Olá {user-name}! 👋 Como posso ajudar você hoje?',
       temperatura: 0.5, forcarModelo: '', ativo: true,
-      gemini: Object.assign({ apiKey: '', model: 'gemini-flash-latest' }, s.form.gemini || {}, { model: 'gemini-flash-latest' }),
+      gemini: Object.assign({ model: 'gemini-flash-latest' }, s.form.gemini || {}, { model: 'gemini-flash-latest' }),
     }), agentTestResult: '', agentTab: 'personalidade' }), () => this.toast('success', 'Configurações restauradas ao padrão. Revise e clique em Salvar.'));
   }
   setAgentTab(t) { this.setState({ agentTab: t }); }
@@ -4822,16 +4820,17 @@ class Component extends DCLogic {
     if (!webhookUrl) { const w = (this.state.canais || []).find(c => c.uazapi && c.uazapi.webhookUrl); if (w) webhookUrl = w.uazapi.webhookUrl; }
     if (!webhookUrl) return; // sem webhook configurado — nada a sincronizar
     const configUrl = webhookUrl.replace(/\/api\/webhook\/?$/, '/api/config').replace(/\/webhook\/?$/, '/config');
-    const gk = ((agent.gemini && agent.gemini.apiKey) || '').trim();
     const payload = {
       prompt: this.buildAgentPrompt(agent, { multimodal: agent.ferramentas && agent.ferramentas.midia, whatsapp: true }),
-      geminiKey: gk,
+      // a chave do Gemini não vem mais do app — o webhook usa a variável de ambiente
+      // GEMINI_API_KEY do servidor diretamente (um só lugar pra atualizar a chave)
       model: (agent.forcarModelo || (agent.gemini && agent.gemini.model)) || 'gemini-flash-latest',
       temperature: (agent.temperatura != null ? agent.temperatura : 0.5),
       welcome: agent.boasVindas || '',
       enabled: agent.ativo !== false,
       driveApiKey: (this.state.driveApiKey || '').trim(),
       notifyNumber: (agent.numeroNotificacao || '').replace(/\D/g, ''),
+      respostaDelay: (agent.respostaDelay != null ? agent.respostaDelay : 3),
     };
     try {
       const r = await fetch(configUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
@@ -5163,25 +5162,19 @@ class Component extends DCLogic {
     setMsg({ transcribing: false, transcricao: (texto || '').trim() });
     this.persistCA();
   }
+  GEMINI_PROXY_URL = 'https://webhook-blond-pi.vercel.app/api/gemini';
+  // chama o Gemini através do servidor (que guarda a chave em GEMINI_API_KEY) — o
+  // navegador nunca vê nem envia a chave, só o servidor tem acesso a ela.
   async geminiComplete(agent, system, userMsg) {
-    const key = (agent.gemini && agent.gemini.apiKey || '').trim();
     const model = (agent.forcarModelo || (agent.gemini && agent.gemini.model)) || 'gemini-flash-latest';
-    const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + encodeURIComponent(key);
-    const payload = {
-      systemInstruction: { parts: [{ text: system }] },
-      contents: [{ role: 'user', parts: [{ text: userMsg }] }],
-      generationConfig: { temperature: (agent.temperatura != null ? agent.temperatura : 0.5) },
-    };
+    const body = JSON.stringify({ system, userMsg, model, temperature: (agent.temperatura != null ? agent.temperatura : 0.5) });
     // retry automático em picos de demanda (503) / rate transitório (429)
     let lastErr = null;
     for (let attempt = 0; attempt < 3; attempt++) {
-      const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const r = await fetch(this.GEMINI_PROXY_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
       let data = null; try { data = await r.json(); } catch (e) { data = {}; }
-      if (r.ok) {
-        const parts = data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts || [];
-        return parts.map(p => p.text || '').join('').trim();
-      }
-      const msg = (data.error && data.error.message) || ('Gemini ' + r.status);
+      if (r.ok) return (data.text || '').trim();
+      const msg = data.error || ('Gemini ' + r.status);
       lastErr = new Error(msg);
       // só vale a pena repetir se for sobrecarga/temporário
       if (r.status === 503 || r.status === 429 || /high demand|overloaded|temporar|try again/i.test(msg)) {
@@ -5226,22 +5219,14 @@ class Component extends DCLogic {
       const history = conv.msgs.map(m => (m.from === 'cliente' ? 'Cliente' : 'Empresa') + ': ' + (m.text || ('[' + (m.type || 'mídia') + ']'))).join('\n');
       const system = this.buildAgentPrompt(agent, { multimodal: agent.ferramentas && agent.ferramentas.midia, whatsapp: false });
       const userMsg = 'Histórico da conversa:\n' + history + '\n\nEscreva a próxima resposta da Empresa para ' + conv.nome + '.';
-      const gk = agent.gemini && agent.gemini.apiKey && agent.gemini.apiKey.trim();
-      if (gk) {
-        // usa a API do Gemini com o prompt do agente
-        try { reply = await this.geminiComplete(agent, system, userMsg); }
-        catch (ge) { geminiErr = this.uaFriendly(ge); }
-      } else if (window.claude && window.claude.complete) {
-        reply = await window.claude.complete({ model: 'claude-haiku-4-5', system, messages: [{ role: 'user', content: userMsg }] });
-      } else {
-        geminiErr = 'Nenhuma chave Gemini configurada no agente (aba Modelo).';
-      }
+      try { reply = await this.geminiComplete(agent, system, userMsg); }
+      catch (ge) { geminiErr = this.uaFriendly(ge); }
     } catch (e) { geminiErr = String((e && e.message) || e); }
     // se o Gemini falhou, avisa o erro real e NÃO envia resposta canned repetida
     if (!((reply || '').trim())) {
       this.setState({ aiThinking: false });
       if (this._answering) this._answering[conv.id] = 0;
-      if (!auto) this.toast('error', 'IA não respondeu: ' + (geminiErr || 'sem retorno do modelo') + '. Verifique a chave Gemini na aba Modelo do agente.');
+      if (!auto) this.toast('error', 'IA não respondeu: ' + (geminiErr || 'sem retorno do modelo') + '. Verifique a chave GEMINI_API_KEY no servidor.');
       else if (geminiErr) { console.warn('[IA auto] ' + geminiErr); if (!this._autoErrShown) { this._autoErrShown = true; this.toast('error', 'IA não respondeu automaticamente: ' + geminiErr); } }
       return;
     }
@@ -6364,7 +6349,6 @@ class Component extends DCLogic {
       });
       vm.agentesList = ags.map(a => {
         const linkedNames = (a.canais || []).map(id => { const ch = this.chById(id); return ch ? ch.nome : null; }).filter(Boolean);
-        const geminiOn = !!(a.gemini && a.gemini.apiKey && a.gemini.apiKey.trim());
         return {
         nome: a.nome, desc: a.desc, icon: a.icon,
         onToggle: () => this.toggleAgente(a.id),
@@ -6374,7 +6358,7 @@ class Component extends DCLogic {
         statusStyle: { fontSize: '12px', fontWeight: 700, marginTop: '2px', color: a.ativo ? 'var(--color-text-success)' : 'var(--color-text-secondary)' },
         toggleStyle: { width: '46px', height: '26px', borderRadius: '999px', border: 'none', cursor: 'pointer', position: 'relative', flexShrink: 0, transition: 'background .2s', background: a.ativo ? '#22c55e' : 'var(--color-border-tertiary)' },
         knobStyle: { position: 'absolute', top: '3px', left: a.ativo ? '23px' : '3px', width: '20px', height: '20px', borderRadius: '50%', background: '#fff', transition: 'left .2s', boxShadow: '0 1px 3px rgba(0,0,0,.3)' },
-        meta: [{ k: 'Tom', v: a.tom }, { k: 'Gemini', v: geminiOn ? ((a.gemini && a.gemini.model) || 'configurado') : 'não configurado' }, { k: 'Canais', v: linkedNames.length ? linkedNames.join(', ') : 'nenhum' }],
+        meta: [{ k: 'Tom', v: a.tom }, { k: 'Gemini', v: (a.gemini && a.gemini.model) || 'gemini-flash-latest' }, { k: 'Canais', v: linkedNames.length ? linkedNames.join(', ') : 'nenhum' }],
         cardStyle: { background: 'var(--color-background-primary)', border: '1px solid var(--color-border-tertiary)', borderRadius: 'var(--radius)', padding: '20px', opacity: a.ativo ? 1 : 0.82 },
         };
       });
@@ -6418,6 +6402,7 @@ class Component extends DCLogic {
       const rec = this.recommendedModel();
       vm.aeRecModel = rec.nome; vm.aeRecMotivo = rec.motivo;
       vm.aeTempPct = Math.round((f.temperatura != null ? f.temperatura : 0.5) * 100);
+      vm.aeRespostaDelayLabel = (f.respostaDelay != null ? f.respostaDelay : 3) + 's';
       vm.vozAtiva = !!(f.voz && f.voz.ativa);
       vm.aeVozToggle = () => this.toggleVoz();
       vm.aeVozStyle = { width: '46px', height: '26px', borderRadius: '999px', border: 'none', cursor: 'pointer', position: 'relative', flexShrink: 0, background: (f.voz && f.voz.ativa) ? '#22c55e' : 'var(--color-border-tertiary)' };

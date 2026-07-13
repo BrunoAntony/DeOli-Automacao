@@ -27,7 +27,8 @@
 // ============================================================
 
 // ----- Variáveis de ambiente (defina na Vercel) -----
-//  GEMINI_API_KEY        chave do Google AI (Gemini)                [obrigatório]
+//  GEMINI_API_KEY        chave do Google AI (Gemini) — único lugar onde ela mora;
+//                        o app não guarda/envia mais chave nenhuma            [obrigatório]
 //  UAZAPI_BASE_URL       ex: https://versatil.uazapi.com            [obrigatório]
 //  UAZAPI_INSTANCE_TOKEN token da instância (enviar/baixar mídia)   [obrigatório]
 //  AGENT_PROMPT          prompt de sistema do agente                [recomendado]
@@ -195,6 +196,9 @@ module.exports = async (req, res) => {
     let replied = false;
     let imagesSent = 0;
     if (AUTO_REPLY && reply && process.env.UAZAPI_BASE_URL && process.env.UAZAPI_INSTANCE_TOKEN) {
+      // espera um pouco antes de responder, pra não parecer instantâneo/robótico
+      const delaySec = Math.min(10, Math.max(2, Number(cfg.respostaDelay) || 3));
+      await new Promise((r) => setTimeout(r, delaySec * 1000));
       await uazapiSendText(from, reply);
       replied = true;
       if (wantsImages) {

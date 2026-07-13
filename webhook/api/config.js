@@ -6,7 +6,9 @@
 //  a ser usada pelo /api/webhook, sem precisar editar variáveis na
 //  Vercel manualmente.
 //
-//  POST body: { prompt, geminiKey, model, temperature, welcome, enabled }
+//  POST body: { prompt, model, temperature, welcome, enabled, notifyNumber, respostaDelay }
+//  A chave do Gemini não vem mais do app — fica só na variável de ambiente
+//  GEMINI_API_KEY da Vercel (um único lugar para todos os agentes).
 //  GET  → retorna a config atual (sem expor a chave)
 // ============================================================
 const { readConfig, writeConfig } = require('./_configStore');
@@ -19,7 +21,7 @@ module.exports = async (req, res) => {
 
   if (req.method === 'GET') {
     const c = await readConfig();
-    return res.status(200).json({ ok: true, configured: !!c, config: c ? { model: c.model, temperature: c.temperature, enabled: c.enabled, hasKey: !!c.geminiKey, hasDriveKey: !!c.driveApiKey, notifyNumber: c.notifyNumber || '', promptLen: (c.prompt || '').length } : null });
+    return res.status(200).json({ ok: true, configured: !!c, config: c ? { model: c.model, temperature: c.temperature, enabled: c.enabled, hasKey: !!c.geminiKey, hasDriveKey: !!c.driveApiKey, notifyNumber: c.notifyNumber || '', respostaDelay: (c.respostaDelay != null ? c.respostaDelay : 3), promptLen: (c.prompt || '').length } : null });
   }
   if (req.method !== 'POST') return res.status(405).json({ error: 'method not allowed' });
 
@@ -34,6 +36,7 @@ module.exports = async (req, res) => {
       enabled: body.enabled !== false,
       driveApiKey: body.driveApiKey || '',
       notifyNumber: (body.notifyNumber || '').replace(/\D/g, ''),
+      respostaDelay: Math.min(10, Math.max(2, Number(body.respostaDelay) || 3)),
       updatedAt: Date.now(),
     };
     const okWrite = await writeConfig(cfg);
