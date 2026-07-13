@@ -133,13 +133,20 @@ module.exports = async (req, res) => {
       + '== AGENDAMENTO FECHADO (OBRIGATÓRIO) ==\n'
       + 'Marque "agendamentoFechado": true e preencha "agendamentoData" com a data/horário combinado SOMENTE no momento em que o cliente CONFIRMAR um agendamento/data para o evento (ele concordou com uma data e horário específicos). Nas demais mensagens use "agendamentoFechado": false e "agendamentoData": null.';
 
+    const horaBR = new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo', hour: 'numeric', hour12: false });
+    const saudacao = Number(horaBR) < 12 ? 'Bom dia' : Number(horaBR) < 18 ? 'Boa tarde' : 'Boa noite';
+    const saudacaoConfigurada = (cfg.welcome || '').trim();
+
     const system = (cfg.prompt || process.env.AGENT_PROMPT || DEFAULT_PROMPT)
       + '\n\n== POSTURA E CONDUÇÃO DE VENDAS ==\n'
       + 'Mantenha sempre um tom profissional e corporativo — cordial, mas sem gírias, sem excesso de emojis e sem informalidade exagerada. '
       + 'Conduza a conversa ativamente para avançar o cliente no funil de vendas: entenda a necessidade dele, desperte interesse mostrando os produtos certos do catálogo e busque encaminhar para o fechamento — nunca deixe a conversa estagnada sem próximo passo. '
       + 'NÃO peça dados do evento (data, tipo de evento, quantidade de peças/convidados, endereço de entrega, etc.) enquanto o cliente ainda está só explorando, pedindo informações ou fotos. Só peça esses dados quando o cliente demonstrar intenção REAL de fechar negócio (pediu orçamento, disse que quer comprar/fechar, perguntou como pagar ou como proceder). Antes disso, foque em qualificar a necessidade e apresentar o catálogo.'
+      + '\nFaça no máximo UMA pergunta por mensagem. Nunca bombardeie o cliente com várias perguntas de uma vez — prefira avançar aos poucos, uma coisa de cada vez.'
       + '\nResponda SEMPRE em português do Brasil, curto e objetivo, como mensagem de WhatsApp.'
-      + (history ? '\n\nIMPORTANTE: há histórico de mensagens anteriores desta conversa abaixo. Se a Empresa já cumprimentou ou se apresentou antes, NÃO cumprimente nem se reapresente de novo — apenas continue a conversa naturalmente a partir de onde parou.' : '')
+      + (history
+        ? '\n\nIMPORTANTE: há histórico de mensagens anteriores desta conversa abaixo. Se a Empresa já cumprimentou ou se apresentou antes, NÃO cumprimente nem se reapresente de novo — apenas continue a conversa naturalmente a partir de onde parou.'
+        : ('\n\nEsta é a primeira mensagem da conversa (sem histórico). Cumprimente de forma simples e direta, sem se alongar em apresentação: ' + (saudacaoConfigurada ? ('use algo parecido com "' + saudacaoConfigurada + '"') : ('use "' + saudacao + '! Como posso ajudar você hoje?"')) + ' — não faça mais de uma pergunta nessa primeira resposta.'))
       + jsonFormatNote;
 
     let userContent;      // partes para o Gemini
