@@ -17,8 +17,9 @@
 //  A IA também transfere sozinha para um atendente humano quando o
 //  cliente pede, quando ela não sabe responder, ou quando um
 //  agendamento é fechado — nesses casos avisa por WhatsApp o número
-//  de notificação (NOTIFY_NUMBER) com os dados do cliente, o resumo
-//  da conversa e a data do agendamento (se houver).
+//  configurado na aba Ferramentas do agente (ou NOTIFY_NUMBER, se
+//  nenhum número for configurado no app) com os dados do cliente,
+//  o resumo da conversa e a data do agendamento (se houver).
 //
 //  Endpoint após deploy: https://SEU-APP.vercel.app/api/webhook
 //  Configure essa URL no painel da uazapi como webhook da instância
@@ -34,7 +35,8 @@
 //  AGENT_TEMPERATURE     opcional (default: 0.5)
 //  STOP_KEYWORD          opcional (default: #humano) — pausa o bot
 //  AUTO_REPLY            opcional 'false' desliga o envio automático
-//  NOTIFY_NUMBER          opcional (default: 5545999751095) — recebe o aviso de handoff
+//  NOTIFY_NUMBER          opcional — só usado se nenhum número for salvo na aba
+//                         Ferramentas do agente (campo "Número para receber os avisos")
 
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-flash-latest';
 const TEMPERATURE = process.env.AGENT_TEMPERATURE ? Number(process.env.AGENT_TEMPERATURE) : 0.5;
@@ -42,7 +44,7 @@ const STOP_KEYWORD = (process.env.STOP_KEYWORD || '#humano').toLowerCase();
 const AUTO_REPLY = process.env.AUTO_REPLY !== 'false';
 const DEFAULT_PROMPT = 'Você é um assistente de atendimento da empresa Versatil (gestão para salões e comércio). Responda em português do Brasil, de forma curta, cordial e útil, como uma mensagem de WhatsApp.';
 const FUNIL_ESTAGIOS = ['novo', 'qualificando', 'interessado', 'fechamento', 'ganho', 'perdido'];
-const NOTIFY_NUMBER = process.env.NOTIFY_NUMBER || '5545999751095';
+const NOTIFY_NUMBER_ENV = process.env.NOTIFY_NUMBER || '';
 const SUPA_URL = 'https://kvxsqbfwakfqdxzilvix.supabase.co';
 const SUPA_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2eHNxYmZ3YWtmcWR4emlsdml4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNzQ0MjYsImV4cCI6MjA5Njc1MDQyNn0.PQads0GXVlNqr11K5co65XbWYoZJWu4V-4h4AR5DdpU';
 // service_role ignora RLS — o app agora exige login (RLS) nas tabelas do
@@ -172,17 +174,22 @@ module.exports = async (req, res) => {
     // a IA responder) e avisa o número de notificação com os dados do cliente e o resumo.
     const precisaHumano = !!(parsed && parsed.precisaHumano);
     const agendamentoFechado = !!(parsed && parsed.agendamentoFechado);
+    const notifyNumber = cfg.notifyNumber || NOTIFY_NUMBER_ENV;
     if (AUTO_REPLY && (precisaHumano || agendamentoFechado)) {
       marcarConversaHumana(telefone).catch((e) => console.error('[handoff] falha ao marcar conversa como humana:', e.message || e));
-      const motivo = agendamentoFechado ? 'Agendamento fechado' : ((parsed && parsed.motivoHumano) || 'IA não soube responder');
-      const agendamentoData = (parsed && parsed.agendamentoData) || '';
-      const resumoMsg = '🔔 *Atendimento precisa de atenção humana*\n'
-        + 'Cliente: ' + nomeCliente + '\n'
-        + 'Telefone: ' + telefone + '\n'
-        + 'Motivo: ' + motivo
-        + (agendamentoData ? ('\nData do agendamento: ' + agendamentoData) : '')
-        + (history ? ('\n\nResumo da conversa:\n' + history + '\nCliente: ' + text) : ('\n\nÚltima mensagem do cliente: ' + text));
-      notifyHuman(resumoMsg).catch((e) => console.error('[handoff] falha ao notificar:', e.message || e));
+      if (notifyNumber) {
+        const motivo = agendamentoFechado ? 'Agendamento fechado' : ((parsed && parsed.motivoHumano) || 'IA não soube responder');
+        const agendamentoData = (parsed && parsed.agendamentoData) || '';
+        const resumoMsg = '🔔 *Atendimento precisa de atenção humana*\n'
+          + 'Cliente: ' + nomeCliente + '\n'
+          + 'Telefone: ' + telefone + '\n'
+          + 'Motivo: ' + motivo
+          + (agendamentoData ? ('\nData do agendamento: ' + agendamentoData) : '')
+          + (history ? ('\n\nResumo da conversa:\n' + history + '\nCliente: ' + text) : ('\n\nÚltima mensagem do cliente: ' + text));
+        notifyHuman(notifyNumber, resumoMsg).catch((e) => console.error('[handoff] falha ao notificar:', e.message || e));
+      } else {
+        console.warn('[handoff] nenhum número de notificação configurado (aba Ferramentas do agente) — aviso não enviado');
+      }
     }
 
     let replied = false;
@@ -336,9 +343,9 @@ async function marcarConversaHumana(telefone) {
   });
 }
 
-async function notifyHuman(text) {
-  if (!process.env.UAZAPI_BASE_URL || !process.env.UAZAPI_INSTANCE_TOKEN) return;
-  await uazapiSendText(NOTIFY_NUMBER, text);
+async function notifyHuman(number, text) {
+  if (!number || !process.env.UAZAPI_BASE_URL || !process.env.UAZAPI_INSTANCE_TOKEN) return;
+  await uazapiSendText(number, text);
 }
 
 async function fetchCatalogo() {
