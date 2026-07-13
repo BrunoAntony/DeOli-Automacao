@@ -1676,7 +1676,7 @@
 <x-dc>
 <helmet>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/dist/tabler-icons.min.css">
-<script>window.__VERSATIL_BUILD__ = "1783961622992";</script>
+<script>window.__VERSATIL_BUILD__ = "1783962743478";</script>
 <style>
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;height:100%;}
@@ -1810,7 +1810,6 @@ input:focus,select:focus,textarea:focus{outline:2px solid #3b82f6;outline-offset
       <sc-if value="{{ accountMenuOpen }}" hint-placeholder-val="{{ false }}">
         <div style="position:absolute;left:20px;right:20px;bottom:66px;background:var(--color-background-primary);color:var(--color-text-primary);border:1px solid var(--color-border-tertiary);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.35);padding:6px;display:flex;flex-direction:column;gap:2px;z-index:60;">
           <button onClick="{{ onOpenConfigSite }}" style="display:flex;align-items:center;gap:10px;background:none;border:none;cursor:pointer;padding:10px 12px;border-radius:9px;font-size:13px;font-weight:600;color:var(--color-text-primary);text-align:left;"><i class="ti ti-settings" style="font-size:16px;"></i>Configurações</button>
-          <button onClick="{{ onOpenChangePassword }}" style="display:flex;align-items:center;gap:10px;background:none;border:none;cursor:pointer;padding:10px 12px;border-radius:9px;font-size:13px;font-weight:600;color:var(--color-text-primary);text-align:left;"><i class="ti ti-key" style="font-size:16px;"></i>Alterar senha</button>
           <button onClick="{{ doLogout }}" style="display:flex;align-items:center;gap:10px;background:none;border:none;cursor:pointer;padding:10px 12px;border-radius:9px;font-size:13px;font-weight:600;color:var(--color-text-danger);text-align:left;"><i class="ti ti-logout" style="font-size:16px;"></i>Sair</button>
         </div>
       </sc-if>
@@ -2735,6 +2734,94 @@ input:focus,select:focus,textarea:focus{outline:2px solid #3b82f6;outline-offset
         </div>
       </sc-if>
 
+      <!-- ===== CONFIGURAÇÕES ===== -->
+      <sc-if value="{{ isConfiguracoes }}" hint-placeholder-val="{{ false }}">
+        <div style="display:grid;grid-template-columns:220px 1fr;gap:24px;align-items:start;">
+          <div style="display:flex;flex-direction:column;gap:3px;background:var(--color-background-primary);border:1px solid var(--color-border-tertiary);border-radius:var(--radius);padding:14px 10px;">
+            <div style="font-size:10.5px;font-weight:700;letter-spacing:1.2px;color:var(--color-text-secondary);padding:2px 13px 8px;">PESSOAL</div>
+            <sc-for list="{{ configSecoes }}" as="sec" hint-placeholder-count="3">
+              <button onClick="{{ sec.onClick }}" style="{{ sec.style }}"><i class="ti {{ sec.icon }}" style="font-size:17px;width:20px;text-align:center;"></i>{{ sec.label }}</button>
+            </sc-for>
+          </div>
+          <div style="background:var(--color-background-primary);border:1px solid var(--color-border-tertiary);border-radius:var(--radius);padding:26px;">
+            <div style="max-width:520px;">
+
+              <!-- PERFIL -->
+              <sc-if value="{{ isCfgPerfil }}" hint-placeholder-val="{{ true }}">
+                <div style="display:flex;flex-direction:column;gap:22px;">
+                  <div><h2 style="margin:0;font-size:20px;font-weight:700;display:flex;align-items:center;gap:9px;"><i class="ti ti-user" style="font-size:19px;color:var(--color-text-secondary);"></i>Informações do Perfil</h2><p style="margin:4px 0 0;font-size:14px;color:var(--color-text-secondary);">Sua conta de acesso ao sistema.</p></div>
+                  <div style="display:flex;align-items:center;gap:16px;">
+                    <div style="width:56px;height:56px;border-radius:50%;background:#1a2b42;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;flex-shrink:0;">{{ cfgUserInitials }}</div>
+                    <div>
+                      <div style="font-weight:700;font-size:16px;">{{ cfgUsername }}</div>
+                      <div style="font-size:13px;color:var(--color-text-secondary);margin-top:2px;">Conta de acesso ao Versatil</div>
+                    </div>
+                  </div>
+                </div>
+              </sc-if>
+
+              <!-- SEGURANÇA -->
+              <sc-if value="{{ isCfgSeguranca }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-direction:column;gap:18px;">
+                  <div><h2 style="margin:0;font-size:20px;font-weight:700;display:flex;align-items:center;gap:9px;"><i class="ti ti-shield-lock" style="font-size:19px;color:var(--color-text-secondary);"></i>Segurança</h2><p style="margin:4px 0 0;font-size:14px;color:var(--color-text-secondary);">Altere a senha usada para entrar no sistema.</p></div>
+                  <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--color-text-secondary);">Senha atual
+                    <input name="currentPassword" type="password" value="{{ form.currentPassword }}" onInput="{{ onFormChange }}" placeholder="••••••••" style="padding:11px 13px;border:1px solid var(--color-border-tertiary);border-radius:9px;background:var(--color-background-secondary);">
+                  </label>
+                  <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--color-text-secondary);">Nova senha
+                    <input name="newPassword" type="password" value="{{ form.newPassword }}" onInput="{{ onFormChange }}" placeholder="mínimo 6 caracteres" style="padding:11px 13px;border:1px solid var(--color-border-tertiary);border-radius:9px;background:var(--color-background-secondary);">
+                  </label>
+                  <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--color-text-secondary);">Confirmar nova senha
+                    <input name="confirmPassword" type="password" value="{{ form.confirmPassword }}" onInput="{{ onFormChange }}" placeholder="repita a nova senha" style="padding:11px 13px;border:1px solid var(--color-border-tertiary);border-radius:9px;background:var(--color-background-secondary);">
+                  </label>
+                  <button onClick="{{ onSaveSeguranca }}" style="align-self:flex-start;display:inline-flex;align-items:center;gap:7px;background:#1a2b42;color:#fff;border:none;border-radius:10px;padding:11px 20px;font-weight:700;font-size:13.5px;cursor:pointer;"><i class="ti ti-device-floppy" style="font-size:16px;"></i>Salvar nova senha</button>
+                </div>
+              </sc-if>
+
+              <!-- PREFERÊNCIAS -->
+              <sc-if value="{{ isCfgPreferencias }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-direction:column;gap:18px;">
+                  <div><h2 style="margin:0;font-size:20px;font-weight:700;display:flex;align-items:center;gap:9px;"><i class="ti ti-palette" style="font-size:19px;color:var(--color-text-secondary);"></i>Preferências</h2><p style="margin:4px 0 0;font-size:14px;color:var(--color-text-secondary);">Personalize o nome, o logo e as cores exibidos no menu lateral.</p></div>
+                  <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--color-text-secondary);">Nome da empresa
+                    <input name="nome" value="{{ form.nome }}" onInput="{{ onFormChange }}" placeholder="ex: Versatil" style="padding:11px 13px;border:1px solid var(--color-border-tertiary);border-radius:9px;background:var(--color-background-secondary);">
+                  </label>
+                  <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--color-text-secondary);">Subtítulo (aparece embaixo do nome, no menu)
+                    <input name="subtitulo" value="{{ form.subtitulo }}" onInput="{{ onFormChange }}" placeholder="ex: Gestão Financeira" style="padding:11px 13px;border:1px solid var(--color-border-tertiary);border-radius:9px;background:var(--color-background-secondary);">
+                  </label>
+                  <div style="display:flex;flex-direction:column;gap:8px;">
+                    <label style="font-size:13px;font-weight:600;color:var(--color-text-secondary);">Logo</label>
+                    <sc-if value="{{ brandFormHasLogo }}" hint-placeholder-val="{{ false }}">
+                      <div style="display:flex;align-items:center;gap:12px;">
+                        <img src="{{ form.logoUrl }}" style="width:48px;height:48px;border-radius:10px;object-fit:contain;background:var(--color-background-secondary);border:1px solid var(--color-border-tertiary);">
+                        <button onClick="{{ onRemoveBrandLogo }}" style="display:inline-flex;align-items:center;gap:6px;background:var(--color-background-secondary);border:1px solid var(--color-border-tertiary);border-radius:9px;padding:9px 13px;font-size:12.5px;font-weight:600;color:var(--color-text-danger);cursor:pointer;"><i class="ti ti-trash" style="font-size:15px;"></i>Remover logo</button>
+                      </div>
+                    </sc-if>
+                    <sc-if value="{{ brandFormNoLogo }}" hint-placeholder-val="{{ true }}">
+                      <label style="display:inline-flex;align-items:center;gap:8px;width:fit-content;background:var(--color-background-secondary);border:1px dashed var(--color-border-tertiary);border-radius:9px;padding:11px 16px;font-size:13px;font-weight:600;cursor:pointer;">
+                        <sc-if value="{{ brandUploading }}" hint-placeholder-val="{{ false }}"><i class="ti ti-loader-2" style="font-size:16px;animation:spin 1s linear infinite;"></i></sc-if>
+                        <sc-if value="{{ brandNotUploading }}" hint-placeholder-val="{{ true }}"><i class="ti ti-upload" style="font-size:16px;"></i></sc-if>
+                        {{ brandUploadLabel }}
+                        <input type="file" accept="image/*" onChange="{{ onBrandLogoChosen }}" disabled="{{ brandUploading }}" style="display:none;">
+                      </label>
+                    </sc-if>
+                    <p style="margin:0;font-size:11.5px;color:var(--color-text-secondary);">Sem logo, o menu mostra um ícone com as cores abaixo.</p>
+                  </div>
+                  <div style="display:flex;gap:14px;">
+                    <label style="flex:1;display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--color-text-secondary);">Cor primária
+                      <input name="corPrimaria" type="color" value="{{ form.corPrimaria }}" onInput="{{ onFormChange }}" style="padding:4px;height:42px;border:1px solid var(--color-border-tertiary);border-radius:9px;background:var(--color-background-secondary);cursor:pointer;">
+                    </label>
+                    <label style="flex:1;display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--color-text-secondary);">Cor secundária
+                      <input name="corSecundaria" type="color" value="{{ form.corSecundaria }}" onInput="{{ onFormChange }}" style="padding:4px;height:42px;border:1px solid var(--color-border-tertiary);border-radius:9px;background:var(--color-background-secondary);cursor:pointer;">
+                    </label>
+                  </div>
+                  <button onClick="{{ onSavePreferencias }}" style="align-self:flex-start;display:inline-flex;align-items:center;gap:7px;background:#1a2b42;color:#fff;border:none;border-radius:10px;padding:11px 20px;font-weight:700;font-size:13.5px;cursor:pointer;"><i class="ti ti-device-floppy" style="font-size:16px;"></i>Salvar preferências</button>
+                </div>
+              </sc-if>
+
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
     </div>
   </main>
 
@@ -3312,59 +3399,6 @@ POLÍTICAS: trocas em até 7 dias com nota." style="padding:14px 15px;border:1px
             </div>
           </sc-if>
 
-          <!-- ALTERAR SENHA -->
-          <sc-if value="{{ m_changepw }}" hint-placeholder-val="{{ false }}">
-            <div style="display:flex;flex-direction:column;gap:16px;">
-              <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--color-text-secondary);">Senha atual
-                <input name="currentPassword" type="password" value="{{ form.currentPassword }}" onInput="{{ onFormChange }}" placeholder="••••••••" style="padding:11px 13px;border:1px solid var(--color-border-tertiary);border-radius:9px;background:var(--color-background-primary);">
-              </label>
-              <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--color-text-secondary);">Nova senha
-                <input name="newPassword" type="password" value="{{ form.newPassword }}" onInput="{{ onFormChange }}" placeholder="mínimo 6 caracteres" style="padding:11px 13px;border:1px solid var(--color-border-tertiary);border-radius:9px;background:var(--color-background-primary);">
-              </label>
-              <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--color-text-secondary);">Confirmar nova senha
-                <input name="confirmPassword" type="password" value="{{ form.confirmPassword }}" onInput="{{ onFormChange }}" placeholder="repita a nova senha" style="padding:11px 13px;border:1px solid var(--color-border-tertiary);border-radius:9px;background:var(--color-background-primary);">
-              </label>
-            </div>
-          </sc-if>
-
-          <!-- CONFIGURAÇÕES DO SITE (nome, logo, cores) -->
-          <sc-if value="{{ m_configsite }}" hint-placeholder-val="{{ false }}">
-            <div style="display:flex;flex-direction:column;gap:16px;">
-              <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--color-text-secondary);">Nome da empresa
-                <input name="nome" value="{{ form.nome }}" onInput="{{ onFormChange }}" placeholder="ex: Versatil" style="padding:11px 13px;border:1px solid var(--color-border-tertiary);border-radius:9px;background:var(--color-background-primary);">
-              </label>
-              <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--color-text-secondary);">Subtítulo (aparece embaixo do nome, no menu)
-                <input name="subtitulo" value="{{ form.subtitulo }}" onInput="{{ onFormChange }}" placeholder="ex: Gestão Financeira" style="padding:11px 13px;border:1px solid var(--color-border-tertiary);border-radius:9px;background:var(--color-background-primary);">
-              </label>
-              <div style="display:flex;flex-direction:column;gap:8px;">
-                <label style="font-size:13px;font-weight:600;color:var(--color-text-secondary);">Logo</label>
-                <sc-if value="{{ brandFormHasLogo }}" hint-placeholder-val="{{ false }}">
-                  <div style="display:flex;align-items:center;gap:12px;">
-                    <img src="{{ form.logoUrl }}" style="width:48px;height:48px;border-radius:10px;object-fit:contain;background:var(--color-background-secondary);border:1px solid var(--color-border-tertiary);">
-                    <button onClick="{{ onRemoveBrandLogo }}" style="display:inline-flex;align-items:center;gap:6px;background:var(--color-background-secondary);border:1px solid var(--color-border-tertiary);border-radius:9px;padding:9px 13px;font-size:12.5px;font-weight:600;color:var(--color-text-danger);cursor:pointer;"><i class="ti ti-trash" style="font-size:15px;"></i>Remover logo</button>
-                  </div>
-                </sc-if>
-                <sc-if value="{{ brandFormNoLogo }}" hint-placeholder-val="{{ true }}">
-                  <label style="display:inline-flex;align-items:center;gap:8px;width:fit-content;background:var(--color-background-secondary);border:1px dashed var(--color-border-tertiary);border-radius:9px;padding:11px 16px;font-size:13px;font-weight:600;cursor:pointer;">
-                    <sc-if value="{{ brandUploading }}" hint-placeholder-val="{{ false }}"><i class="ti ti-loader-2" style="font-size:16px;animation:spin 1s linear infinite;"></i></sc-if>
-                    <sc-if value="{{ brandNotUploading }}" hint-placeholder-val="{{ true }}"><i class="ti ti-upload" style="font-size:16px;"></i></sc-if>
-                    {{ brandUploadLabel }}
-                    <input type="file" accept="image/*" onChange="{{ onBrandLogoChosen }}" disabled="{{ brandUploading }}" style="display:none;">
-                  </label>
-                </sc-if>
-                <p style="margin:0;font-size:11.5px;color:var(--color-text-secondary);">Sem logo, o menu mostra um ícone com as cores abaixo.</p>
-              </div>
-              <div style="display:flex;gap:14px;">
-                <label style="flex:1;display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--color-text-secondary);">Cor primária
-                  <input name="corPrimaria" type="color" value="{{ form.corPrimaria }}" onInput="{{ onFormChange }}" style="padding:4px;height:42px;border:1px solid var(--color-border-tertiary);border-radius:9px;background:var(--color-background-primary);cursor:pointer;">
-                </label>
-                <label style="flex:1;display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--color-text-secondary);">Cor secundária
-                  <input name="corSecundaria" type="color" value="{{ form.corSecundaria }}" onInput="{{ onFormChange }}" style="padding:4px;height:42px;border:1px solid var(--color-border-tertiary);border-radius:9px;background:var(--color-background-primary);cursor:pointer;">
-                </label>
-              </div>
-            </div>
-          </sc-if>
-
           <!-- ENVIAR FOTOS DO CATÁLOGO NA CONVERSA (seleção múltipla) -->
           <sc-if value="{{ m_catpicker }}" hint-placeholder-val="{{ false }}">
             <div style="display:flex;flex-direction:column;gap:14px;">
@@ -3688,6 +3722,7 @@ class Component extends DCLogic {
     funilClientes: [],
     brand: { nome: 'Versatil', subtitulo: 'Gestão Financeira', logoUrl: '', corPrimaria: '#3b82f6', corSecundaria: '#22d3ee' },
     brandUploading: false,
+    configSection: 'perfil',
     wppStatus: 'desconectado',
     wppStep: 'config',
     wppQrImg: null,
@@ -3767,11 +3802,20 @@ class Component extends DCLogic {
     clearInterval(this._pollMsgs); clearInterval(this._updCheck); this.stopSSE();
     this.setState({ authSession: null, authForm: { username: '', password: '' }, authError: '' });
   };
-  // ---- menu "Configurações" da conta (rodapé da sidebar) ----
+  // ---- página "Configurações" (Perfil / Segurança / Preferências) ----
   CHANGE_PASSWORD_URL = 'https://webhook-blond-pi.vercel.app/api/change-password';
   toggleAccountMenu = () => this.setState(s => ({ accountMenuOpen: !s.accountMenuOpen }));
-  openChangePassword() {
-    this.setState({ modal: 'change_password', accountMenuOpen: false, form: { currentPassword: '', newPassword: '', confirmPassword: '' } });
+  setConfigSection = (k) => this.setState({ configSection: k });
+  openConfigPage() {
+    const b = this.state.brand || {};
+    this.setState({
+      tab: 'configuracoes', accountMenuOpen: false, configSection: 'perfil',
+      form: {
+        nome: b.nome || 'Versatil', subtitulo: b.subtitulo || '', logoUrl: b.logoUrl || '',
+        corPrimaria: b.corPrimaria || '#3b82f6', corSecundaria: b.corSecundaria || '#22d3ee',
+        currentPassword: '', newPassword: '', confirmPassword: '',
+      },
+    });
   }
   async saveChangePassword() {
     const f = this.state.form || {};
@@ -3790,21 +3834,17 @@ class Component extends DCLogic {
       });
       const data = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(data.error || 'Falha ao trocar a senha');
-      this.setState({ modal: null, form: {} });
+      this.setState(s => ({ form: Object.assign({}, s.form, { currentPassword: '', newPassword: '', confirmPassword: '' }) }));
       this.toast('success', 'Senha alterada com sucesso');
     } catch (e) {
       this.toast('error', (e && e.message) || 'Falha ao trocar a senha');
     }
   }
-  openConfigSite() {
-    const b = this.state.brand || {};
-    this.setState({ modal: 'config_site', accountMenuOpen: false, form: { nome: b.nome || 'Versatil', subtitulo: b.subtitulo || '', logoUrl: b.logoUrl || '', corPrimaria: b.corPrimaria || '#3b82f6', corSecundaria: b.corSecundaria || '#22d3ee' } });
-  }
   saveConfigSite() {
     const f = this.state.form || {};
     if (!f.nome || !f.nome.trim()) return this.toast('error', 'Informe o nome da empresa');
     const brand = { nome: f.nome.trim(), subtitulo: (f.subtitulo || '').trim(), logoUrl: f.logoUrl || '', corPrimaria: f.corPrimaria || '#3b82f6', corSecundaria: f.corSecundaria || '#22d3ee' };
-    this.setState({ brand, modal: null, form: {} }, () => { this.persistCA(); this.toast('success', 'Configurações do site salvas'); });
+    this.setState({ brand }, () => { this.persistCA(); this.toast('success', 'Preferências salvas'); });
   }
   onBrandLogoChosen = (e) => {
     const file = (e.target.files || [])[0];
@@ -5406,8 +5446,6 @@ class Component extends DCLogic {
     if (m === 'novo_agendamento') return this.saveNovoAgendamento();
     if (m === 'gcal_config') return this.saveGcalConfig();
     if (m === 'drive_config') return this.saveDriveConfig();
-    if (m === 'change_password') return this.saveChangePassword();
-    if (m === 'config_site') return this.saveConfigSite();
     if (m === 'config_canal') return this.saveCanal();
     if (m === 'nova_categoria') return this.saveCategoria();
     if (m === 'subcategoria') return this.saveSubcategoria();
@@ -5492,8 +5530,7 @@ class Component extends DCLogic {
     vm.doLogout = this.doLogout;
     vm.accountMenuOpen = !!S.accountMenuOpen;
     vm.onToggleAccountMenu = this.toggleAccountMenu;
-    vm.onOpenChangePassword = () => this.openChangePassword();
-    vm.onOpenConfigSite = () => this.openConfigSite();
+    vm.onOpenConfigSite = () => this.openConfigPage();
     // ---- marca (nome/logo/cores do cabeçalho da sidebar) ----
     { const b = S.brand || {};
       vm.brandNome = b.nome || 'Versatil';
@@ -5578,6 +5615,7 @@ class Component extends DCLogic {
       funil: ['Funil de Vendas', 'Posição de cada cliente no funil, do primeiro contato ao fechamento'],
       agendamentos: ['Agendamentos', 'Horários marcados pelos agentes de IA'],
       agentes: ['Agentes IA', 'Automação inteligente do atendimento'],
+      configuracoes: ['Configurações', 'Gerencie seu perfil e preferências'],
     };
     const addLabels = { vendas: 'Nova Venda', compras: 'Nova Ordem', despesas: 'Nova Despesa', estoque: 'Novo Produto', clientes: 'Novo Cliente', fornecedores: 'Novo Fornecedor', produtos: 'Nova Categoria' };
 
@@ -5603,10 +5641,10 @@ class Component extends DCLogic {
       showAdd: ['vendas', 'compras', 'despesas', 'estoque', 'clientes', 'fornecedores', 'produtos'].includes(tab) && !S.viewCompra, addLabel: addLabels[tab] || '', openAdd: () => this.openAdd(),
       stop: (e) => e.stopPropagation(),
       // modal
-      showModal: !!S.modal, modalTitle: { nova_venda: 'Nova Venda', nova_compra: 'Nova Ordem de Compra', nova_despesa: 'Nova Despesa', novo_produto: 'Novo Produto', novo_cliente: 'Novo Cliente', novo_fornecedor: 'Novo Fornecedor', nova_categoria: (S.form && S.form._id) ? 'Editar Categoria' : 'Nova Categoria', subcategoria: (S.form && S.form._id) ? 'Editar Subcategoria' : 'Nova Subcategoria', config_agente: S.form && S.form.id ? 'Configurar Agente' : 'Novo Agente', config_canal: S.form && S.form._new ? 'Adicionar Canal' : 'Configurar Canal', conectar_wpp: 'Conectar WhatsApp', nova_conversa: 'Nova Conversa', renomear_conv: 'Renomear Contato', add_cliente_conv: 'Adicionar aos Clientes', excluir_conv: 'Excluir Conversa', novo_agendamento: 'Novo Agendamento', gcal_config: 'Sincronizar Google Agenda', drive_config: 'Fotos do Catálogo via Google Drive', catalogo_picker: 'Enviar fotos do catálogo', change_password: 'Alterar Senha', config_site: 'Configurações do Site' }[S.modal] || '',
+      showModal: !!S.modal, modalTitle: { nova_venda: 'Nova Venda', nova_compra: 'Nova Ordem de Compra', nova_despesa: 'Nova Despesa', novo_produto: 'Novo Produto', novo_cliente: 'Novo Cliente', novo_fornecedor: 'Novo Fornecedor', nova_categoria: (S.form && S.form._id) ? 'Editar Categoria' : 'Nova Categoria', subcategoria: (S.form && S.form._id) ? 'Editar Subcategoria' : 'Nova Subcategoria', config_agente: S.form && S.form.id ? 'Configurar Agente' : 'Novo Agente', config_canal: S.form && S.form._new ? 'Adicionar Canal' : 'Configurar Canal', conectar_wpp: 'Conectar WhatsApp', nova_conversa: 'Nova Conversa', renomear_conv: 'Renomear Contato', add_cliente_conv: 'Adicionar aos Clientes', excluir_conv: 'Excluir Conversa', novo_agendamento: 'Novo Agendamento', gcal_config: 'Sincronizar Google Agenda', drive_config: 'Fotos do Catálogo via Google Drive', catalogo_picker: 'Enviar fotos do catálogo' }[S.modal] || '',
       m_venda: S.modal === 'nova_venda', m_compra: S.modal === 'nova_compra', m_despesa: S.modal === 'nova_despesa', m_produto: S.modal === 'novo_produto', m_cliente: S.modal === 'novo_cliente', m_fornecedor: S.modal === 'novo_fornecedor', m_categoria: S.modal === 'nova_categoria', m_subcategoria: S.modal === 'subcategoria',
       m_agente: S.modal === 'config_agente', m_canal: S.modal === 'config_canal', m_wpp: S.modal === 'conectar_wpp', m_novaconv: S.modal === 'nova_conversa',
-      m_renomear: S.modal === 'renomear_conv', m_addcli: S.modal === 'add_cliente_conv', m_excluirconv: S.modal === 'excluir_conv', m_agendamento: S.modal === 'novo_agendamento', m_gcal: S.modal === 'gcal_config', m_drive: S.modal === 'drive_config', m_catpicker: S.modal === 'catalogo_picker', m_changepw: S.modal === 'change_password', m_configsite: S.modal === 'config_site',
+      m_renomear: S.modal === 'renomear_conv', m_addcli: S.modal === 'add_cliente_conv', m_excluirconv: S.modal === 'excluir_conv', m_agendamento: S.modal === 'novo_agendamento', m_gcal: S.modal === 'gcal_config', m_drive: S.modal === 'drive_config', m_catpicker: S.modal === 'catalogo_picker',
       brandUploading: !!S.brandUploading, brandNotUploading: !S.brandUploading,
       brandUploadLabel: S.brandUploading ? 'Enviando…' : 'Escolher imagem',
       brandFormHasLogo: !!(S.form && S.form.logoUrl), brandFormNoLogo: !(S.form && S.form.logoUrl),
@@ -6435,6 +6473,26 @@ class Component extends DCLogic {
       vm.aeTestResult = S.agentTestResult || '';
       vm.aeTestIcon = S.agentTestOk ? 'ti-circle-check' : 'ti-alert-triangle';
       vm.aeTestStyle = { display: 'flex', alignItems: 'flex-start', gap: '9px', padding: '11px 13px', borderRadius: '10px', fontSize: '12.5px', lineHeight: 1.45, background: S.agentTestOk ? 'var(--color-background-success)' : 'var(--color-background-danger)', color: S.agentTestOk ? 'var(--color-text-success)' : 'var(--color-text-danger)' };
+    }
+
+    // ===== CONFIGURAÇÕES (Perfil / Segurança / Preferências) =====
+    vm.isConfiguracoes = tab === 'configuracoes';
+    if (vm.isConfiguracoes) {
+      const cs = S.configSection || 'perfil';
+      const secDefs = [
+        { k: 'perfil', label: 'Perfil', icon: 'ti-user' },
+        { k: 'seguranca', label: 'Segurança', icon: 'ti-shield-lock' },
+        { k: 'preferencias', label: 'Preferências', icon: 'ti-palette' },
+      ];
+      vm.configSecoes = secDefs.map(d => ({
+        label: d.label, icon: d.icon, onClick: () => this.setConfigSection(d.k),
+        style: { display: 'flex', alignItems: 'center', gap: '10px', width: '100%', border: 'none', cursor: 'pointer', textAlign: 'left', padding: '10px 13px', borderRadius: '9px', fontSize: '13.5px', fontWeight: 600, background: cs === d.k ? 'var(--color-background-info)' : 'transparent', color: cs === d.k ? 'var(--color-text-info)' : 'var(--color-text-secondary)' },
+      }));
+      vm.isCfgPerfil = cs === 'perfil'; vm.isCfgSeguranca = cs === 'seguranca'; vm.isCfgPreferencias = cs === 'preferencias';
+      vm.cfgUsername = this.nomeUsuario(this.currentUsername()) || S.authUsername || '—';
+      vm.cfgUserInitials = vm.authInitials;
+      vm.onSaveSeguranca = () => this.saveChangePassword();
+      vm.onSavePreferencias = () => this.saveConfigSite();
     }
 
     return vm;
