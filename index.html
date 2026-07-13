@@ -1676,7 +1676,7 @@
 <x-dc>
 <helmet>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/dist/tabler-icons.min.css">
-<script>window.__VERSATIL_BUILD__ = "1783892450057";</script>
+<script>window.__VERSATIL_BUILD__ = "1783905753357";</script>
 <style>
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;height:100%;}
@@ -2548,6 +2548,51 @@ input:focus,select:focus,textarea:focus{outline:2px solid #3b82f6;outline-offset
               </div>
             </sc-if>
           </div>
+        </div>
+      </sc-if>
+
+      <!-- ===== FUNIL DE VENDAS ===== -->
+      <sc-if value="{{ isFunil }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;height:100%;">
+          <sc-if value="{{ funilEmpty }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:70px 24px;text-align:center;background:var(--color-background-primary);border:1px solid var(--color-border-tertiary);border-radius:var(--radius);">
+              <div style="width:72px;height:72px;border-radius:50%;background:var(--color-background-secondary);display:flex;align-items:center;justify-content:center;color:var(--color-text-secondary);"><i class="ti ti-chart-funnel" style="font-size:34px;"></i></div>
+              <div style="font-weight:700;font-size:17px;">Nenhum cliente classificado ainda</div>
+              <div style="font-size:14px;color:var(--color-text-secondary);line-height:1.5;max-width:380px;">A IA classifica automaticamente o estágio de cada cliente conforme a conversa avança. Assim que houver conversas em andamento, elas aparecem aqui.</div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ funilHasData }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;gap:14px;overflow-x:auto;flex:1;padding-bottom:8px;">
+              <sc-for list="{{ funilColunas }}" as="col" hint-placeholder-count="6">
+                <div style="{{ col.colStyle }}">
+                  <div style="{{ col.headerStyle }}">
+                    <div style="{{ col.iconWrapStyle }}"><i class="ti {{ col.icon }}" style="font-size:14px;"></i></div>
+                    <span>{{ col.label }}</span>
+                    <span style="{{ col.countStyle }}">{{ col.count }}</span>
+                  </div>
+                  <div style="flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:9px;">
+                    <sc-for list="{{ col.cards }}" as="card" hint-placeholder-count="2">
+                      <div style="background:var(--color-background-primary);border:1px solid var(--color-border-tertiary);border-radius:10px;padding:12px 13px;display:flex;flex-direction:column;gap:8px;">
+                        <button onClick="{{ card.onAbrir }}" disabled="{{ card.cardBtnDisabled }}" style="display:flex;align-items:center;gap:9px;background:transparent;border:none;padding:0;text-align:left;cursor:pointer;width:100%;">
+                          <div style="width:32px;height:32px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;background:var(--color-background-tertiary);color:var(--color-text-secondary);">{{ card.initials }}</div>
+                          <div style="min-width:0;flex:1;">
+                            <div style="font-weight:600;font-size:13px;color:var(--color-text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ card.nome }}</div>
+                            <div style="font-size:11.5px;color:var(--color-text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ card.preview }}</div>
+                          </div>
+                        </button>
+                        <select value="{{ card.estagio }}" onChange="{{ card.onMoveStage }}" style="width:100%;padding:6px 7px;border:1px solid var(--color-border-tertiary);border-radius:7px;background:var(--color-background-secondary);font-size:11.5px;cursor:pointer;">
+                          <sc-for list="{{ funilEstagioOptions }}" as="op" hint-placeholder-count="0"><option value="{{ op.key }}">{{ op.label }}</option></sc-for>
+                        </select>
+                        <sc-if value="{{ card.atualizado }}" hint-placeholder-val="{{ false }}">
+                          <div style="font-size:10.5px;color:var(--color-text-secondary);">Atualizado em {{ card.atualizado }}</div>
+                        </sc-if>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
         </div>
       </sc-if>
 
@@ -3590,6 +3635,7 @@ class Component extends DCLogic {
     aiThinking: false,
     agentes: [],
     canais: [],
+    funilClientes: [],
     wppStatus: 'desconectado',
     wppStep: 'config',
     wppQrImg: null,
@@ -3605,7 +3651,7 @@ class Component extends DCLogic {
 
   componentDidMount() { this.restoreSession(() => { if (this.state.authSession) this.boot(); }); }
   componentWillUnmount() { clearInterval(this._pollMsgs); clearInterval(this._updCheck); this.stopSSE(); }
-  boot() { this.loadAll(); this.seedAtendimento(); this.loadCatalogo(); setTimeout(() => this.checkRetornosIA(), 800); this._pollMsgs = setInterval(() => this.pollNovasMensagens(), 12000); this._updCheck = setInterval(() => this.checkForUpdate(), 60000); setTimeout(() => this.checkForUpdate(), 5000); setTimeout(() => this.startSSE(), 1500); }
+  boot() { this.loadAll(); this.seedAtendimento(); this.loadCatalogo(); this.loadFunil(); setTimeout(() => this.checkRetornosIA(), 800); this._pollMsgs = setInterval(() => this.pollNovasMensagens(), 12000); this._updCheck = setInterval(() => this.checkForUpdate(), 60000); setTimeout(() => this.checkForUpdate(), 5000); setTimeout(() => this.startSSE(), 1500); }
   // ---------- autenticação (usuário/senha próprios — tabela app_users no Supabase) ----------
   // Não usa Supabase Auth: o servidor (webhook/api/login.js) confere a senha (hash) e devolve
   // um JWT assinado com o mesmo JWT secret do projeto Supabase — as políticas de RLS
@@ -3851,6 +3897,38 @@ class Component extends DCLogic {
         if (!r.ok) throw new Error('HTTP ' + r.status);
       });
     }, 'configuração (agentes/canais/agendamentos)');
+  }
+  // ---------- funil de vendas (kanban de clientes) ----------
+  // linha própria por telefone, escrita tanto pelo webhook (respostas automáticas 24/7)
+  // quanto pelo navegador (iaCheckFunil / arraste manual no Kanban)
+  async loadFunil() {
+    try {
+      const rows = await this.api('GET', 'funil_clientes', { query: 'select=*' });
+      this.setState({ funilClientes: rows || [] });
+    } catch (e) { console.warn('[funil] falha ao carregar:', e.message || e); }
+  }
+  async syncFunilCliente(telefone, nome, estagio) {
+    if (!telefone) return;
+    this.setState(s => {
+      const list = s.funilClientes || [];
+      const idx = list.findIndex(f => f.telefone === telefone);
+      const row = { telefone, nome: nome || telefone, estagio, updated_at: new Date().toISOString() };
+      const next = idx >= 0 ? list.map((f, i) => i === idx ? Object.assign({}, f, row) : f) : [...list, row];
+      return { funilClientes: next };
+    });
+    await this.syncWithRetry(async () => {
+      const r = await fetch(this.SUPA_URL + '/rest/v1/funil_clientes', {
+        method: 'POST',
+        headers: this.headers({ Prefer: 'resolution=merge-duplicates,return=minimal' }),
+        body: JSON.stringify({ telefone, nome: nome || telefone, estagio, updated_at: new Date().toISOString() }),
+      });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+    }, 'estágio do funil');
+  }
+  moveFunilStage(telefone, estagio, nome) {
+    this.syncFunilCliente(telefone, nome, estagio);
+    const def = this.FUNIL_ESTAGIOS.find(e => e.key === estagio);
+    this.toast('success', (nome || 'Cliente') + ' movido para "' + ((def && def.label) || estagio) + '"');
   }
   // ---------- catálogo de produtos (tipos) ----------
   // Guardado à parte (linha própria em app_config) para não engordar/atrasar
@@ -4150,6 +4228,42 @@ class Component extends DCLogic {
         this.toast('info', 'Agendamento de ' + (jaTem.nome || 'cliente') + ' cancelado pela IA');
       }
       // parsed.acao === 'pedir_motivo' → a própria IA já pergunta o motivo na resposta ao cliente; nada a alterar aqui
+    } catch (e) { /* silencioso */ }
+  }
+  FUNIL_ESTAGIOS = [
+    { key: 'novo', label: 'Novo Contato', cor: '#94a3b8', icon: 'ti-user-plus' },
+    { key: 'qualificando', label: 'Qualificando', cor: '#3b82f6', icon: 'ti-help-circle' },
+    { key: 'interessado', label: 'Interessado', cor: '#8b5cf6', icon: 'ti-heart' },
+    { key: 'fechamento', label: 'Fechando Negócio', cor: '#f59e0b', icon: 'ti-file-invoice' },
+    { key: 'ganho', label: 'Fechado (Ganho)', cor: '#16a34a', icon: 'ti-circle-check' },
+    { key: 'perdido', label: 'Perdido', cor: '#ef4444', icon: 'ti-circle-x' },
+  ];
+  // classifica o estágio do cliente no funil de vendas com base na conversa (best-effort,
+  // igual em espírito ao iaCheckAgendamento) — usado no caminho manual/navegador; o
+  // caminho automático (webhook, que responde 24/7) já classifica isso sozinho
+  async iaCheckFunil(conv, agent) {
+    try {
+      if (!conv || !agent) return;
+      const gk = agent.gemini && agent.gemini.apiKey && agent.gemini.apiKey.trim();
+      if (!gk) return;
+      const telefone = this.convPhone(conv);
+      if (!telefone) return;
+      const history = conv.msgs.map(m => (m.from === 'cliente' ? 'Cliente' : 'Empresa') + ': ' + (m.text || ('[' + (m.type || 'mídia') + ']'))).join('\n');
+      const estagios = this.FUNIL_ESTAGIOS.map(e => e.key).join('", "');
+      const sys = 'Você classifica o estágio de clientes no funil de vendas de uma empresa de convites e artigos para eventos. Responda SOMENTE com JSON válido, sem texto extra, no formato {"estagio": "novo"|"qualificando"|"interessado"|"fechamento"|"ganho"|"perdido"}.\n'
+        + '- "novo": primeiro contato, ainda não disse claramente o que precisa.\n'
+        + '- "qualificando": já disse o que procura; entendendo a necessidade.\n'
+        + '- "interessado": já viu produtos/fotos e demonstrou gostar de algo específico.\n'
+        + '- "fechamento": pediu orçamento/preço final, disse que quer fechar/comprar, ou perguntou como pagar/proceder.\n'
+        + '- "ganho": o pedido já foi confirmado/fechado.\n'
+        + '- "perdido": desistiu ou não há mais chance de venda.\n'
+        + 'Valores possíveis: "' + estagios + '".';
+      const userMsg = 'Conversa:\n' + history + '\n\nQual o estágio atual?';
+      const raw = await this.geminiComplete(agent, sys, userMsg);
+      const jtxt = (raw || '').replace(/```json|```/g, '').trim();
+      let parsed = null; try { parsed = JSON.parse(jtxt); } catch (e) { const m = jtxt.match(/\{[\s\S]*\}/); if (m) { try { parsed = JSON.parse(m[0]); } catch (e2) {} } }
+      const estagio = parsed && this.FUNIL_ESTAGIOS.some(e => e.key === parsed.estagio) ? parsed.estagio : null;
+      if (estagio) this.syncFunilCliente(telefone, conv.nome, estagio);
     } catch (e) { /* silencioso */ }
   }
   updateAgendamento(id, patch) {
@@ -4919,6 +5033,7 @@ class Component extends DCLogic {
       p += '\n\n== BASE DE CONHECIMENTO ==\nUse SOMENTE as informações abaixo como fonte de verdade sobre a empresa, produtos, preços, horários e políticas. Se a resposta não estiver aqui e você não tiver certeza, diga que vai verificar em vez de inventar.\n\n' + agent.conhecimento.trim();
     }
     p += '\n\n== AGENDAMENTOS ==\nVocê pode agendar, alterar e cancelar horários. Quando o cliente pedir para CANCELAR ou ALTERAR/remarcar um agendamento, SEMPRE pergunte educadamente o MOTIVO antes de confirmar. Depois de saber o motivo, confirme a alteração ou o cancelamento.';
+    p += '\n\n== POSTURA E CONDUÇÃO DE VENDAS ==\nMantenha sempre um tom profissional e corporativo — cordial, mas sem gírias, sem excesso de emojis e sem informalidade exagerada. Conduza a conversa ativamente para avançar o cliente no funil de vendas: entenda a necessidade dele, desperte interesse mostrando os produtos certos e busque encaminhar para o fechamento — nunca deixe a conversa estagnada sem próximo passo. NÃO peça dados do evento (data, tipo de evento, quantidade de peças/convidados, endereço de entrega, etc.) enquanto o cliente ainda está só explorando ou pedindo informações/fotos. Só peça esses dados quando o cliente demonstrar intenção REAL de fechar negócio (pediu orçamento, disse que quer comprar/fechar, perguntou como pagar ou como proceder).';
     if (opts.multimodal) {
       p += '\n\nVocê é multimodal: interprete imagens e documentos enviados pelo cliente e entenda o conteúdo de áudios (transcreva quando necessário) para responder com precisão.';
     }
@@ -5079,6 +5194,7 @@ class Component extends DCLogic {
     // após responder, verifica se a conversa gerou um agendamento (best-effort)
     const convAtual = (this.state.conversas || []).find(c => c.id === conv.id) || conv;
     this.iaCheckAgendamento(convAtual, agent);
+    this.iaCheckFunil(convAtual, agent);
     if (this._answering) this._answering[conv.id] = 0;
   }
 
@@ -5336,6 +5452,7 @@ class Component extends DCLogic {
       ] },
       { key: 'atendimento', label: 'ATENDIMENTO', items: [
         { key: 'atendimento', label: 'Atendimento', icon: 'ti-messages', badge: unreadTotal || null, badgeColor: '#3b82f6' },
+        { key: 'funil', label: 'Funil de Vendas', icon: 'ti-chart-funnel', badge: (S.funilClientes || []).length || null, badgeColor: '#8b5cf6' },
         { key: 'agendamentos', label: 'Agendamentos', icon: 'ti-calendar-event', badge: (S.agendamentos || []).length || null, badgeColor: '#16a34a' },
         { key: 'agentes', label: 'Agentes IA', icon: 'ti-robot', badge: agentesAtivos || null, badgeColor: '#10b981' },
       ] },
@@ -5388,6 +5505,7 @@ class Component extends DCLogic {
       fornecedores: ['Fornecedores', 'Parceiros e condições comerciais'],
       produtos: ['Produtos', 'Catálogo de produtos por tipo'],
       atendimento: ['Atendimento', 'Central de mensagens e conversas'],
+      funil: ['Funil de Vendas', 'Posição de cada cliente no funil, do primeiro contato ao fechamento'],
       agendamentos: ['Agendamentos', 'Horários marcados pelos agentes de IA'],
       agentes: ['Agentes IA', 'Automação inteligente do atendimento'],
     };
@@ -6047,6 +6165,44 @@ class Component extends DCLogic {
       vm.onCancelReply = this.cancelReply;
       vm.aiBtnDisabled = S.aiThinking || !conv;
       vm.aiBtnStyle = { background: S.aiThinking ? 'var(--color-background-tertiary)' : 'linear-gradient(135deg,#6d28d9,#3b82f6)', color: S.aiThinking ? 'var(--color-text-secondary)' : '#fff', border: 'none', borderRadius: '11px', width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: S.aiThinking ? 'default' : 'pointer', flexShrink: 0 };
+    }
+
+    // ===== FUNIL DE VENDAS (kanban) =====
+    vm.isFunil = tab === 'funil';
+    if (vm.isFunil) {
+      const porTelefone = {};
+      (S.conversas || []).forEach(c => { const t = this.convPhone(c); if (t) porTelefone[t] = c; });
+      vm.funilEstagioOptions = this.FUNIL_ESTAGIOS;
+      vm.funilColunas = this.FUNIL_ESTAGIOS.map(def => {
+        const itens = (S.funilClientes || []).filter(f => (f.estagio || 'novo') === def.key)
+          .slice().sort((a, b) => new Date(b.updated_at || 0) - new Date(a.updated_at || 0));
+        return {
+          key: def.key, label: def.label, icon: def.icon,
+          colStyle: { flex: '0 0 270px', display: 'flex', flexDirection: 'column', background: 'var(--color-background-secondary)', border: '1px solid var(--color-border-tertiary)', borderRadius: 'var(--radius)', overflow: 'hidden', maxHeight: '100%' },
+          headerStyle: { display: 'flex', alignItems: 'center', gap: '9px', padding: '13px 14px', borderTop: '3px solid ' + def.cor, borderBottom: '1px solid var(--color-border-tertiary)', fontWeight: 700, fontSize: '13.5px', flexShrink: 0 },
+          iconWrapStyle: { width: '26px', height: '26px', borderRadius: '7px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: def.cor + '22', color: def.cor, flexShrink: 0 },
+          countStyle: { marginLeft: 'auto', fontSize: '11.5px', fontWeight: 700, color: 'var(--color-text-secondary)', background: 'var(--color-background-primary)', borderRadius: '999px', padding: '2px 9px' },
+          count: itens.length,
+          cards: itens.map(f => {
+            const conv = porTelefone[f.telefone];
+            const lastMsg = conv && conv.msgs && conv.msgs[conv.msgs.length - 1];
+            return {
+              telefone: f.telefone,
+              nome: f.nome || f.telefone,
+              initials: this.initials(f.nome || f.telefone),
+              canAbrir: !!conv,
+              cardBtnDisabled: !conv,
+              onAbrir: conv ? (() => { this.setTab('atendimento'); this.openConv(conv.id); }) : null,
+              preview: lastMsg ? (lastMsg.text || ('[' + (lastMsg.type || 'mídia') + ']')) : 'Sem conversa vinculada',
+              atualizado: f.updated_at ? this.fmtDate(f.updated_at) : '',
+              estagio: f.estagio || 'novo',
+              onMoveStage: (e) => this.moveFunilStage(f.telefone, e.target.value, f.nome),
+            };
+          }),
+        };
+      });
+      vm.funilEmpty = (S.funilClientes || []).length === 0;
+      vm.funilHasData = !vm.funilEmpty;
     }
 
     // ===== AGENDAMENTOS (módulo próprio) =====

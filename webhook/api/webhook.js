@@ -34,6 +34,7 @@ const TEMPERATURE = process.env.AGENT_TEMPERATURE ? Number(process.env.AGENT_TEM
 const STOP_KEYWORD = (process.env.STOP_KEYWORD || '#humano').toLowerCase();
 const AUTO_REPLY = process.env.AUTO_REPLY !== 'false';
 const DEFAULT_PROMPT = 'Você é um assistente de atendimento da empresa Versatil (gestão para salões e comércio). Responda em português do Brasil, de forma curta, cordial e útil, como uma mensagem de WhatsApp.';
+const FUNIL_ESTAGIOS = ['novo', 'qualificando', 'interessado', 'fechamento', 'ganho', 'perdido'];
 const SUPA_URL = 'https://kvxsqbfwakfqdxzilvix.supabase.co';
 const SUPA_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2eHNxYmZ3YWtmcWR4emlsdml4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNzQ0MjYsImV4cCI6MjA5Njc1MDQyNn0.PQads0GXVlNqr11K5co65XbWYoZJWu4V-4h4AR5DdpU';
 // service_role ignora RLS — o app agora exige login (RLS) nas tabelas do
@@ -95,13 +96,25 @@ module.exports = async (req, res) => {
 
     const jsonFormatNote = '\n\n== FORMATO DE RESPOSTA (OBRIGATÓRIO) ==\n'
       + 'Responda SOMENTE com um JSON válido (sem texto fora do JSON), no formato exato:\n'
-      + '{"reply": "sua resposta em português do Brasil, curta e cordial, como mensagem de WhatsApp", "sendImages": true ou false, "subcategoriaId": "id da subcategoria escolhida, ou null", "estilo": "tag do estilo pedido pelo cliente (ex: floral, clássico), ou null"}\n'
+      + '{"reply": "sua resposta em português do Brasil, curta e profissional, como mensagem de WhatsApp", "sendImages": true ou false, "subcategoriaId": "id da subcategoria escolhida, ou null", "estilo": "tag do estilo pedido pelo cliente (ex: floral, clássico), ou null", "estagioFunil": "estágio atual do cliente no funil de vendas"}\n'
       + (catalogoText
         ? ('Marque "sendImages": true e escolha o "subcategoriaId" SOMENTE quando o cliente pedir explicitamente para ver fotos, exemplos ou modelos de produtos, E uma das subcategorias abaixo corresponder claramente ao que ele pediu na conversa. Se o cliente mencionar um estilo específico (ex: "quero algo floral", "tem modelo minimalista?") e essa tag aparecer na lista de tags da subcategoria, preencha "estilo" com essa tag (copie exatamente como está listado); caso contrário deixe "estilo": null e será enviada uma foto geral da subcategoria. Preste atenção ao contexto: nunca envie fotos de uma categoria/subcategoria diferente da que o cliente está perguntando. Se o cliente não pediu fotos/exemplos, ou nenhuma subcategoria bate com o pedido, use "sendImages": false e "subcategoriaId": null.\n\n== CATÁLOGO DE PRODUTOS DISPONÍVEL (categoria > subcategoria [id]: descrição (tags de estilo disponíveis, se houver)) ==\n' + catalogoText)
-        : 'Não há catálogo de imagens cadastrado — sempre responda "sendImages": false e "subcategoriaId": null.');
+        : 'Não há catálogo de imagens cadastrado — sempre responda "sendImages": false e "subcategoriaId": null.')
+      + '\n\n== CLASSIFICAÇÃO NO FUNIL DE VENDAS (OBRIGATÓRIO) ==\n'
+      + 'Preencha "estagioFunil" com o estágio atual do cliente, considerando toda a conversa (não só a última mensagem), usando exatamente um destes valores:\n'
+      + '- "novo": primeiro contato, ainda não disse claramente o que precisa.\n'
+      + '- "qualificando": já disse o que procura; você está entendendo a necessidade dele.\n'
+      + '- "interessado": já viu produtos/fotos/exemplos e demonstrou gostar de algo específico.\n'
+      + '- "fechamento": pediu orçamento/preço final, disse que quer fechar ou comprar, ou perguntou como pagar/proceder.\n'
+      + '- "ganho": o pedido já foi confirmado/fechado.\n'
+      + '- "perdido": desistiu, disse que não quer mais, ou claramente não há mais chance de venda.';
 
     const system = (cfg.prompt || process.env.AGENT_PROMPT || DEFAULT_PROMPT)
-      + '\nResponda SEMPRE em português do Brasil, curto e cordial, como mensagem de WhatsApp.'
+      + '\n\n== POSTURA E CONDUÇÃO DE VENDAS ==\n'
+      + 'Mantenha sempre um tom profissional e corporativo — cordial, mas sem gírias, sem excesso de emojis e sem informalidade exagerada. '
+      + 'Conduza a conversa ativamente para avançar o cliente no funil de vendas: entenda a necessidade dele, desperte interesse mostrando os produtos certos do catálogo e busque encaminhar para o fechamento — nunca deixe a conversa estagnada sem próximo passo. '
+      + 'NÃO peça dados do evento (data, tipo de evento, quantidade de peças/convidados, endereço de entrega, etc.) enquanto o cliente ainda está só explorando, pedindo informações ou fotos. Só peça esses dados quando o cliente demonstrar intenção REAL de fechar negócio (pediu orçamento, disse que quer comprar/fechar, perguntou como pagar ou como proceder). Antes disso, foque em qualificar a necessidade e apresentar o catálogo.'
+      + '\nResponda SEMPRE em português do Brasil, curto e objetivo, como mensagem de WhatsApp.'
       + (history ? '\n\nIMPORTANTE: há histórico de mensagens anteriores desta conversa abaixo. Se a Empresa já cumprimentou ou se apresentou antes, NÃO cumprimente nem se reapresente de novo — apenas continue a conversa naturalmente a partir de onde parou.' : '')
       + jsonFormatNote;
 
@@ -126,6 +139,14 @@ module.exports = async (req, res) => {
     const parsed = parseAgentJson(raw);
     const reply = (parsed && typeof parsed.reply === 'string' && parsed.reply.trim()) ? parsed.reply.trim() : raw.trim();
     const wantsImages = !!(parsed && parsed.sendImages && parsed.subcategoriaId);
+
+    // classificação no funil de vendas — best-effort, nunca derruba a resposta ao cliente
+    const estagio = (parsed && FUNIL_ESTAGIOS.includes(parsed.estagioFunil)) ? parsed.estagioFunil : null;
+    if (estagio) {
+      const telefone = phoneFromJid(from);
+      const nomeCliente = msg.senderName || msg.pushName || msg.notifyName || msg.chatName || msg.name || telefone;
+      upsertFunilCliente(telefone, nomeCliente, estagio).catch((e) => console.error('[funil] falha ao salvar estágio:', e.message || e));
+    }
 
     let replied = false;
     let imagesSent = 0;
@@ -231,6 +252,20 @@ function findSubcategoria(catalogo, subId) {
   return null;
 }
 
+function phoneFromJid(jid) {
+  const digits = String(jid || '').replace(/@.*/, '').replace(/[^0-9]/g, '');
+  return digits ? ('+' + digits) : '';
+}
+
+async function upsertFunilCliente(telefone, nome, estagio) {
+  if (!telefone) return;
+  await fetch(SUPA_URL + '/rest/v1/funil_clientes', {
+    method: 'POST',
+    headers: { apikey: SUPA_ANON_KEY, Authorization: 'Bearer ' + SUPA_SERVICE_KEY, 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates,return=minimal' },
+    body: JSON.stringify({ telefone, nome: nome || telefone, estagio, updated_at: new Date().toISOString() }),
+  });
+}
+
 async function fetchCatalogo() {
   try {
     const r = await fetch(SUPA_URL + '/rest/v1/app_config?id=eq.produtos_catalogo&select=data', {
@@ -292,8 +327,9 @@ async function geminiGenerate(system, parts, key, model, temperature, jsonMode) 
         sendImages: { type: 'BOOLEAN' },
         subcategoriaId: { type: 'STRING', nullable: true },
         estilo: { type: 'STRING', nullable: true },
+        estagioFunil: { type: 'STRING', enum: FUNIL_ESTAGIOS },
       },
-      required: ['reply', 'sendImages'],
+      required: ['reply', 'sendImages', 'estagioFunil'],
     };
   }
   const payload = {
