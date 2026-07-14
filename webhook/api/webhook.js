@@ -190,6 +190,11 @@ module.exports = async (req, res) => {
     const notifyNumber = cfg.notifyNumber || NOTIFY_NUMBER_ENV;
     if (AUTO_REPLY && (precisaHumano || agendamentoFechado)) {
       marcarConversaHumana(telefone).catch((e) => console.error('[handoff] falha ao marcar conversa como humana:', e.message || e));
+      if (agendamentoFechado) {
+        const resumoConversa = (history ? history.split('\n').slice(-6).join(' ') : text || '').slice(0, 300);
+        createAgendamento(telefone, nomeCliente, (parsed && parsed.agendamentoData) || '', resumoConversa)
+          .catch((e) => console.error('[agendamento] falha ao salvar:', e.message || e));
+      }
       if (notifyNumber) {
         const motivo = agendamentoFechado ? 'Agendamento fechado' : ((parsed && parsed.motivoHumano) || 'IA não soube responder');
         const agendamentoData = (parsed && parsed.agendamentoData) || '';
@@ -330,12 +335,49 @@ async function conversaEstaComHumano(telefone) {
   } catch (e) { return false; }
 }
 
+// service_role não carrega um empresa_id no token (é assim que o Supabase
+// identifica multi-tenant), então todo INSERT feito por aqui precisa mandar
+// empresa_id explicitamente — sem isso, o gatilho do banco não consegue
+// preenchê-lo sozinho e a gravação falha. Por enquanto só existe 1 empresa;
+// quando o roteamento por canal (Fase 3) entrar, isso vira o empresa_id
+// resolvido a partir do canal que recebeu a mensagem.
+let _empresaIdCache = null;
+async function getEmpresaId() {
+  if (_empresaIdCache) return _empresaIdCache;
+  try {
+    const r = await fetch(SUPA_URL + '/rest/v1/empresas?select=id&limit=1', {
+      headers: { apikey: SUPA_ANON_KEY, Authorization: 'Bearer ' + SUPA_SERVICE_KEY },
+    });
+    if (!r.ok) return null;
+    const rows = await r.json();
+    _empresaIdCache = rows && rows[0] && rows[0].id;
+    return _empresaIdCache || null;
+  } catch (e) { return null; }
+}
+
 async function upsertFunilCliente(telefone, nome, estagio) {
   if (!telefone) return;
+  const empresa_id = await getEmpresaId();
+  if (!empresa_id) return;
   await fetch(SUPA_URL + '/rest/v1/funil_clientes', {
     method: 'POST',
     headers: { apikey: SUPA_ANON_KEY, Authorization: 'Bearer ' + SUPA_SERVICE_KEY, 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates,return=minimal' },
-    body: JSON.stringify({ telefone, nome: nome || telefone, estagio, updated_at: new Date().toISOString() }),
+    body: JSON.stringify({ telefone, nome: nome || telefone, estagio, empresa_id, updated_at: new Date().toISOString() }),
+  });
+}
+
+// cria o registro do agendamento assim que a IA detecta que o cliente
+// fechou uma data — antes disso só existia o aviso por WhatsApp, o
+// agendamento nunca ficava salvo em lugar nenhum se ninguém estivesse
+// com o app aberto naquela conversa
+async function createAgendamento(telefone, nome, quando, resumo) {
+  if (!telefone) return;
+  const empresa_id = await getEmpresaId();
+  if (!empresa_id) return;
+  await fetch(SUPA_URL + '/rest/v1/agendamentos', {
+    method: 'POST',
+    headers: { apikey: SUPA_ANON_KEY, Authorization: 'Bearer ' + SUPA_SERVICE_KEY, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+    body: JSON.stringify({ telefone, nome: nome || telefone, quando: quando || '', resumo: resumo || '', origem: 'IA', status: 'ativo', empresa_id }),
   });
 }
 

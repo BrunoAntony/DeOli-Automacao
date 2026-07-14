@@ -1676,7 +1676,7 @@
 <x-dc>
 <helmet>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/dist/tabler-icons.min.css">
-<script>window.__VERSATIL_BUILD__ = "1783975501000";</script>
+<script>window.__VERSATIL_BUILD__ = "1783977800000";</script>
 <style>
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;height:100%;}
@@ -3738,7 +3738,7 @@ class Component extends DCLogic {
 
   componentDidMount() { this.restoreSession(() => { if (this.state.authSession) this.boot(); }); }
   componentWillUnmount() { clearInterval(this._pollMsgs); clearInterval(this._updCheck); this.stopSSE(); }
-  boot() { this.loadAll(); this.seedAtendimento(); this.loadCatalogo(); this.loadFunil(); setTimeout(() => this.checkRetornosIA(), 800); this._pollMsgs = setInterval(() => this.pollNovasMensagens(), 12000); this._updCheck = setInterval(() => this.checkForUpdate(), 60000); setTimeout(() => this.checkForUpdate(), 5000); setTimeout(() => this.startSSE(), 1500); }
+  boot() { this.loadAll(); this.seedAtendimento(); this.loadCatalogo(); this.loadFunil(); this.loadAgendamentos(); setTimeout(() => this.checkRetornosIA(), 800); this._pollMsgs = setInterval(() => this.pollNovasMensagens(), 12000); this._updCheck = setInterval(() => this.checkForUpdate(), 60000); setTimeout(() => this.checkForUpdate(), 5000); setTimeout(() => this.startSSE(), 1500); }
   // ---------- autenticação (usuário/senha próprios — tabela app_users no Supabase) ----------
   // Não usa Supabase Auth: o servidor (webhook/api/login.js) confere a senha (hash) e devolve
   // um JWT assinado com o mesmo JWT secret do projeto Supabase — as políticas de RLS
@@ -3947,7 +3947,6 @@ class Component extends DCLogic {
     this.setState({
       agentes: ((saved && saved.agentes) || defAgentes).map(a => { a = Object.assign({}, a); a.gemini = Object.assign({ model: 'gemini-flash-latest' }, a.gemini || {}); if (/gemini-(1\.5|2\.0)/.test(a.gemini.model || '')) a.gemini.model = 'gemini-flash-latest'; if (/gemini-1\.5/.test(a.forcarModelo || '')) a.forcarModelo = ''; return a; }),
       conversas: savedConversas,
-      agendamentos: (saved && saved.agendamentos) || [],
       gcalUrl: (saved && saved.gcalUrl) || '',
       gcalSecret: (saved && saved.gcalSecret) || '',
       driveApiKey: (saved && saved.driveApiKey) || '',
@@ -3962,19 +3961,20 @@ class Component extends DCLogic {
       // Só grava local; o envio ao servidor acontece nas telas de edição (que já chamam
       // persistCA() explicitamente quando o usuário salva algo).
       try {
-        localStorage.setItem('versatil_ca', JSON.stringify({ conversas: this.state.conversas, agentes: this.state.agentes, canais: this.state.canais, agendamentos: this.state.agendamentos, gcalUrl: this.state.gcalUrl, gcalSecret: this.state.gcalSecret, driveApiKey: this.state.driveApiKey, brand: this.state.brand }));
+        localStorage.setItem('versatil_ca', JSON.stringify({ conversas: this.state.conversas, agentes: this.state.agentes, canais: this.state.canais, gcalUrl: this.state.gcalUrl, gcalSecret: this.state.gcalSecret, driveApiKey: this.state.driveApiKey, brand: this.state.brand }));
       } catch (e) {}
       if (this.wppConnectedChannel()) this.syncWppConversas(true);
     });
   }
   persistCA = () => {
-    const snapshot = { conversas: this.state.conversas, agentes: this.state.agentes, canais: this.state.canais, agendamentos: this.state.agendamentos, gcalUrl: this.state.gcalUrl, gcalSecret: this.state.gcalSecret, driveApiKey: this.state.driveApiKey, brand: this.state.brand };
+    const snapshot = { conversas: this.state.conversas, agentes: this.state.agentes, canais: this.state.canais, gcalUrl: this.state.gcalUrl, gcalSecret: this.state.gcalSecret, driveApiKey: this.state.driveApiKey, brand: this.state.brand };
     try { localStorage.setItem('versatil_ca', JSON.stringify(snapshot)); } catch (e) {}
-    // sincroniza com o Supabase JÁ (sem debounce) — config compartilhada (agentes/canais/
-    // agendamentos) e as conversas (cada uma na sua própria linha, tabela "conversas", chave =
-    // telefone). Um debounce aqui atrasava o envio e, se a página fosse recarregada antes do
-    // timer disparar, a alteração nunca chegava ao servidor e sumia ao recarregar.
-    const shared = { agentes: snapshot.agentes, canais: snapshot.canais, agendamentos: snapshot.agendamentos, gcalUrl: snapshot.gcalUrl, gcalSecret: snapshot.gcalSecret, driveApiKey: snapshot.driveApiKey, brand: snapshot.brand };
+    // sincroniza com o Supabase JÁ (sem debounce) — config compartilhada (agentes/canais) e
+    // as conversas (cada uma na sua própria linha, tabela "conversas", chave = telefone).
+    // Agendamentos tem tabela própria (ver loadAgendamentos/addAgendamento/updateAgendamento)
+    // e não passa mais por aqui. Um debounce aqui atrasava o envio e, se a página fosse
+    // recarregada antes do timer disparar, a alteração nunca chegava ao servidor e sumia.
+    const shared = { agentes: snapshot.agentes, canais: snapshot.canais, gcalUrl: snapshot.gcalUrl, gcalSecret: snapshot.gcalSecret, driveApiKey: snapshot.driveApiKey, brand: snapshot.brand };
     this.syncSharedConfig(shared);
     this.syncConversas();
   };
@@ -4242,13 +4242,47 @@ class Component extends DCLogic {
   deleteSubcategoria(catId, subId) {
     this.setState(s => ({ catalogo: s.catalogo.map(c => c.id !== catId ? c : Object.assign({}, c, { subcategorias: (c.subcategorias || []).filter(x => x.id !== subId) })) }), () => { this.persistCatalogo(); this.toast('info', 'Subcategoria removida'); });
   }
-  // ---- agendamentos ----
-  addAgendamento(ag) {
-    const item = Object.assign({ id: 'ag' + Date.now() + Math.floor(Math.random() * 999), criadoEm: Date.now(), origem: 'IA' }, ag);
-    this.setState(s => ({ agendamentos: [item, ...(s.agendamentos || [])] }), () => { this.persistCA(); this.toast('success', 'Agendamento registrado: ' + (item.nome || 'cliente')); this.syncGoogleCal(item); });
-    return item;
+  // ---- agendamentos (tabela própria no Supabase — não vive mais dentro do
+  // JSON compartilhado de app_config, pra cada agendamento ser sua própria
+  // linha e nunca arriscar sobrescrever outro dado) ----
+  agRowToJs(r) {
+    return {
+      id: r.id, convId: r.conv_id, nome: r.nome, telefone: r.telefone, quando: r.quando, data: r.data, hora: r.hora,
+      resumo: r.resumo, origem: r.origem, status: r.status, motivo: r.motivo,
+      gcalSynced: !!r.gcal_synced, gcalLink: r.gcal_link,
+      criadoEm: r.criado_em ? Date.parse(r.criado_em) : null,
+      alteradoEm: r.alterado_em ? Date.parse(r.alterado_em) : null,
+      canceladoEm: r.cancelado_em ? Date.parse(r.cancelado_em) : null,
+    };
   }
-  removeAgendamento(id) { this.setState(s => ({ agendamentos: (s.agendamentos || []).filter(a => a.id !== id) }), () => { this.persistCA(); this.toast('info', 'Agendamento removido'); }); }
+  agJsToRow(ag) {
+    const row = {};
+    if ('convId' in ag) row.conv_id = ag.convId;
+    ['nome', 'telefone', 'quando', 'data', 'hora', 'resumo', 'origem', 'status', 'motivo'].forEach(k => { if (k in ag) row[k] = ag[k]; });
+    if ('gcalSynced' in ag) row.gcal_synced = ag.gcalSynced;
+    if ('gcalLink' in ag) row.gcal_link = ag.gcalLink;
+    if ('alteradoEm' in ag) row.alterado_em = new Date(ag.alteradoEm).toISOString();
+    if ('canceladoEm' in ag) row.cancelado_em = new Date(ag.canceladoEm).toISOString();
+    return row;
+  }
+  async loadAgendamentos() {
+    try {
+      const rows = await this.api('GET', 'agendamentos', { query: 'select=*&order=criado_em.desc' });
+      this.setState({ agendamentos: (rows || []).map(r => this.agRowToJs(r)) });
+    } catch (e) { console.warn('[agendamentos] falha ao carregar:', e.message || e); }
+  }
+  async addAgendamento(ag) {
+    try {
+      const rows = await this.api('POST', 'agendamentos', { body: Object.assign({ origem: 'IA' }, this.agJsToRow(ag)), query: null });
+      const item = this.agRowToJs((rows && rows[0]) || {});
+      this.setState(s => ({ agendamentos: [item, ...(s.agendamentos || [])] }), () => { this.toast('success', 'Agendamento registrado: ' + (item.nome || 'cliente')); this.syncGoogleCal(item); });
+      return item;
+    } catch (e) { this.toast('error', 'Falha ao salvar agendamento: ' + (e.message || e)); return null; }
+  }
+  removeAgendamento(id) {
+    this.api('DELETE', 'agendamentos', { id }).catch((e) => console.warn('[agendamentos] falha ao remover:', e.message || e));
+    this.setState(s => ({ agendamentos: (s.agendamentos || []).filter(a => a.id !== id) }), () => { this.toast('info', 'Agendamento removido'); });
+  }
   // ---- Google Calendar (sincronização automática via backend) ----
   openGcalConfig() { this.setState({ modal: 'gcal_config', form: { gcalUrl: this.state.gcalUrl || '', gcalSecret: this.state.gcalSecret || '' } }); }
   saveGcalConfig() {
@@ -4275,7 +4309,7 @@ class Component extends DCLogic {
       const data = await r.json().catch(() => ({}));
       if (!r.ok) { if (manual) this.toast('error', 'Google Agenda: ' + (data.error || r.status)); return; }
       // marca como sincronizado
-      this.setState(s => ({ agendamentos: (s.agendamentos || []).map(a => a.id === item.id ? Object.assign({}, a, { gcalSynced: true, gcalLink: data.htmlLink || '' }) : a) }), this.persistCA);
+      this.updateAgendamento(item.id, { gcalSynced: true, gcalLink: data.htmlLink || '' });
       if (manual) this.toast('success', 'Adicionado à Google Agenda!');
     } catch (e) { if (manual) this.toast('error', 'Falha ao sincronizar (CORS ou rede).'); }
   }
@@ -4388,7 +4422,8 @@ class Component extends DCLogic {
     } catch (e) { /* silencioso */ }
   }
   updateAgendamento(id, patch) {
-    this.setState(s => ({ agendamentos: (s.agendamentos || []).map(a => a.id === id ? Object.assign({}, a, patch) : a) }), this.persistCA);
+    this.api('PATCH', 'agendamentos', { id, body: this.agJsToRow(patch) }).catch((e) => console.warn('[agendamentos] falha ao atualizar:', e.message || e));
+    this.setState(s => ({ agendamentos: (s.agendamentos || []).map(a => a.id === id ? Object.assign({}, a, patch) : a) }));
   }
   toggleGroup(key) { this.setState(s => { const cur = s.openGroups[key] !== false; return { openGroups: Object.assign({}, s.openGroups, { [key]: !cur }) }; }); }
   setConvTab(t) { this.setState({ convTab: t, activeConv: t === 'contatos' ? null : this.state.activeConv }); }
