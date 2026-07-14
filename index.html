@@ -1676,7 +1676,7 @@
 <x-dc>
 <helmet>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/dist/tabler-icons.min.css">
-<script>window.__VERSATIL_BUILD__ = "1783980900000";</script>
+<script>window.__VERSATIL_BUILD__ = "1783982400000";</script>
 <style>
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;height:100%;}
@@ -4522,6 +4522,11 @@ class Component extends DCLogic {
       if (ch) {
         try {
           await this.uaFetch(this.uaBaseFor(ch.uazapi), '/chat/delete', 'POST', ch.uazapi.instanceToken, { number: conv.chatid, deleteChatWhatsApp: true, deleteChatDB: true, deleteMessagesDB: true });
+          // a uazapi confirma a exclusão, mas o /chat/find da sincronização pode continuar
+          // listando esse chat por um tempo e "ressuscitar" a conversa no próximo poll —
+          // marca o horário da exclusão pra sync ignorar esse chat até chegar mensagem nova de verdade
+          this._deletedWppTs = this._deletedWppTs || {};
+          this._deletedWppTs[conv.chatid] = Date.now();
           this.toast('success', 'Conversa excluída do WhatsApp');
           return;
         } catch (e) { this.toast('error', 'Conversa apagada do app, mas não foi possível apagar no WhatsApp: ' + this.uaFriendly(e)); return; }
@@ -4586,7 +4591,14 @@ class Component extends DCLogic {
     try {
       const resp = await this.uaFetch(base, '/chat/find', 'POST', token, { operator: 'AND', sort: '-wa_lastMsgTimestamp', limit: 50, offset: 0, wa_isGroup: false });
       const chats = resp.chats || resp.data || (Array.isArray(resp) ? resp : []) || [];
-      const mapped = chats.map(ch2 => {
+      const deletedTs = this._deletedWppTs || {};
+      const mapped = chats.filter(ch2 => {
+        const chatid = ch2.wa_chatid || ch2.chatid || ch2.id || '';
+        const delAt = deletedTs[chatid];
+        // ignora chat recém-excluído aqui no app, a menos que já tenha mensagem nova de
+        // verdade depois da exclusão (a uazapi às vezes continua listando o chat por um tempo)
+        return !delAt || Number(ch2.wa_lastMsgTimestamp || 0) > delAt;
+      }).map(ch2 => {
         const chatid = ch2.wa_chatid || ch2.chatid || ch2.id || '';
         const phone = (ch2.phone || chatid).replace(/@.*/, '').replace(/[^0-9]/g, '');
         const nome = ch2.name || ch2.wa_contactName || ch2.wa_name || (phone ? ('+' + phone) : 'Contato');
