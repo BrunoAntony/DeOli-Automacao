@@ -8,7 +8,7 @@ agendamento é registrado no APP VERSATIL.
 1. Acesse [Google Cloud Console](https://console.cloud.google.com) → crie/selecione um projeto.
 2. **APIs e serviços → Biblioteca** → ative a **Google Calendar API**.
 3. **APIs e serviços → Tela de consentimento OAuth** → configure (tipo Externo, adicione seu e-mail como usuário de teste).
-4. **Credenciais → Criar credenciais → ID do cliente OAuth → Tipo: App para computador**. Anote o **Client ID** e **Client Secret**.
+4. **Credenciais → Criar credenciais → ID do cliente OAuth → Tipo: Aplicativo da Web** (⚠️ não "App para computador" — esse tipo não aceita o redirect URI do OAuth Playground e dá erro `redirect_uri_mismatch`). Em **URIs de redirecionamento autorizados**, adicione `https://developers.google.com/oauthplayground`. Anote o **Client ID** e **Client Secret**.
 5. Gere um **refresh token** (uma vez):
    - Abra o [OAuth Playground](https://developers.google.com/oauthplayground).
    - Clique na engrenagem (canto sup. direito) → marque **Use your own OAuth credentials** → cole Client ID/Secret.
