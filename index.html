@@ -1676,7 +1676,7 @@
 <x-dc>
 <helmet>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/dist/tabler-icons.min.css">
-<script>window.__VERSATIL_BUILD__ = "1783974012000";</script>
+<script>window.__VERSATIL_BUILD__ = "1783975501000";</script>
 <style>
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;height:100%;}
@@ -3955,7 +3955,17 @@ class Component extends DCLogic {
       wppStatus: savedWpp ? 'conectado' : 'desconectado',
       activeConv: null,
       brand: Object.assign({ nome: 'Versatil', subtitulo: 'Gestão Financeira', logoUrl: '', corPrimaria: '#3b82f6', corSecundaria: '#22d3ee' }, (saved && saved.brand) || {}),
-    }, () => { this.persistCA(); if (this.wppConnectedChannel()) this.syncWppConversas(true); });
+    }, () => {
+      // NUNCA sincroniza com o Supabase logo após carregar: se a leitura acima falhou
+      // (rede, RLS, etc.) o estado aqui é só o fallback local/default, e reenviar isso
+      // pro servidor sobrescreveria a configuração real de lá com dado incompleto.
+      // Só grava local; o envio ao servidor acontece nas telas de edição (que já chamam
+      // persistCA() explicitamente quando o usuário salva algo).
+      try {
+        localStorage.setItem('versatil_ca', JSON.stringify({ conversas: this.state.conversas, agentes: this.state.agentes, canais: this.state.canais, agendamentos: this.state.agendamentos, gcalUrl: this.state.gcalUrl, gcalSecret: this.state.gcalSecret, driveApiKey: this.state.driveApiKey, brand: this.state.brand }));
+      } catch (e) {}
+      if (this.wppConnectedChannel()) this.syncWppConversas(true);
+    });
   }
   persistCA = () => {
     const snapshot = { conversas: this.state.conversas, agentes: this.state.agentes, canais: this.state.canais, agendamentos: this.state.agendamentos, gcalUrl: this.state.gcalUrl, gcalSecret: this.state.gcalSecret, driveApiKey: this.state.driveApiKey, brand: this.state.brand };
