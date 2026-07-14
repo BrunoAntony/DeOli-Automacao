@@ -7,8 +7,9 @@
 //  cobre o caso do admin cross-empresa vendo/criando pra uma
 //  empresa que não é a "dona" da conta dele).
 //
-//  GET  → lista { id, username, role, createdAt }
-//  POST → cria { username, password, role } (role: 'admin' | 'funcionario')
+//  GET    → lista { id, username, role, createdAt }
+//  POST   → cria { username, password, role } (role: 'admin' | 'funcionario')
+//  DELETE → remove ?id=<userId> (não deixa apagar a si mesmo nem o último admin)
 //  Header: Authorization: Bearer <access_token da sessão>
 // ============================================================
 const crypto = require('crypto');
@@ -42,7 +43,7 @@ async function auth(req, serviceKey, jwtSecret) {
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(204).end();
 
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -91,6 +92,38 @@ module.exports = async (req, res) => {
       const created = await ins.json();
       const u = created && created[0];
       return res.status(200).json({ ok: true, defaultPassword: DEFAULT_PASSWORD, user: u ? { id: u.id, username: u.username, role: u.role, createdAt: u.created_at } : null });
+    }
+
+    if (req.method === 'DELETE') {
+      let userId = (req.query && req.query.id) || '';
+      if (!userId && req.url) {
+        try { userId = new URL(req.url, 'http://x').searchParams.get('id') || ''; } catch (e) {}
+      }
+      if (!userId) return res.status(400).json({ error: 'Informe o id do usuário' });
+      if (userId === ctx.caller.id) return res.status(400).json({ error: 'Você não pode remover seu próprio usuário' });
+
+      const rt = await fetch(SUPA_URL + '/rest/v1/app_users?id=eq.' + encodeURIComponent(userId) + '&empresa_id=eq.' + encodeURIComponent(ctx.empresaId) + '&select=id,role', {
+        headers: { apikey: SUPA_ANON_KEY, Authorization: 'Bearer ' + serviceKey },
+      });
+      if (!rt.ok) throw new Error('Falha ao consultar usuário: ' + rt.status);
+      const targetRows = await rt.json();
+      const target = targetRows && targetRows[0];
+      if (!target) return res.status(404).json({ error: 'Usuário não encontrado nesta empresa' });
+
+      if (target.role === 'admin') {
+        const ra = await fetch(SUPA_URL + '/rest/v1/app_users?empresa_id=eq.' + encodeURIComponent(ctx.empresaId) + '&role=eq.admin&select=id', {
+          headers: { apikey: SUPA_ANON_KEY, Authorization: 'Bearer ' + serviceKey },
+        });
+        const admins = ra.ok ? await ra.json() : [];
+        if ((admins || []).length <= 1) return res.status(400).json({ error: 'Não é possível remover o único administrador da empresa' });
+      }
+
+      const del = await fetch(SUPA_URL + '/rest/v1/app_users?id=eq.' + encodeURIComponent(userId), {
+        method: 'DELETE',
+        headers: { apikey: SUPA_ANON_KEY, Authorization: 'Bearer ' + serviceKey, Prefer: 'return=minimal' },
+      });
+      if (!del.ok) throw new Error('Falha ao remover usuário: ' + del.status);
+      return res.status(200).json({ ok: true });
     }
 
     return res.status(405).json({ error: 'method not allowed' });
