@@ -1676,7 +1676,7 @@
 <x-dc>
 <helmet>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/dist/tabler-icons.min.css">
-<script>window.__VERSATIL_BUILD__ = "1783996800000";</script>
+<script>window.__VERSATIL_BUILD__ = "1783999500000";</script>
 <style>
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;height:100%;}
@@ -4102,7 +4102,9 @@ class Component extends DCLogic {
     }).filter(Boolean);
     if (!rows.length) return;
     await this.syncWithRetry(async () => {
-      const r = await fetch(this.SUPA_URL + '/rest/v1/conversas', {
+      // a chave passou a ser (empresa_id, telefone) — mesmo número pode existir em
+      // empresas diferentes, então precisa dizer explicitamente qual é o conflito
+      const r = await fetch(this.SUPA_URL + '/rest/v1/conversas?on_conflict=empresa_id,telefone', {
         method: 'POST',
         headers: this.headers({ Prefer: 'resolution=merge-duplicates,return=minimal' }),
         body: JSON.stringify(rows),

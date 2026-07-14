@@ -362,7 +362,9 @@ async function conversaEstaComHumano(telefone, empresaId) {
 // já resolvido a partir do canal que recebeu a mensagem.
 async function upsertFunilCliente(telefone, nome, estagio, empresaId) {
   if (!telefone || !empresaId) return;
-  await fetch(SUPA_URL + '/rest/v1/funil_clientes', {
+  // a chave passou a ser (empresa_id, telefone) — mesmo número pode existir em
+  // empresas diferentes, então precisa dizer explicitamente qual é o conflito
+  await fetch(SUPA_URL + '/rest/v1/funil_clientes?on_conflict=empresa_id,telefone', {
     method: 'POST',
     headers: { apikey: SUPA_ANON_KEY, Authorization: 'Bearer ' + SUPA_SERVICE_KEY, 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates,return=minimal' },
     body: JSON.stringify({ telefone, nome: nome || telefone, estagio, empresa_id: empresaId, updated_at: new Date().toISOString() }),
