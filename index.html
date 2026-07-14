@@ -1676,7 +1676,7 @@
 <x-dc>
 <helmet>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/dist/tabler-icons.min.css">
-<script>window.__VERSATIL_BUILD__ = "1783986600000";</script>
+<script>window.__VERSATIL_BUILD__ = "1783989200000";</script>
 <style>
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;height:100%;}
@@ -3988,10 +3988,17 @@ class Component extends DCLogic {
     Promise.resolve(p).then(() => this.syncWppConversas(true)).then(done, done);
   }
 
+  // caches locais (agentes/canais/catálogo) não podem ser compartilhados entre empresas —
+  // sem isso, trocar de empresa no seletor herdava o WhatsApp/canais cacheados da empresa
+  // anterior enquanto a config remota daquela empresa nova ainda não existia
+  lsKey(base) {
+    const eid = this.state.authSession && this.state.authSession.empresa_id;
+    return eid ? (base + '_' + eid) : base;
+  }
   // ---------- atendimento / agentes IA ----------
   async seedAtendimento() {
     let saved = null;
-    try { saved = JSON.parse(localStorage.getItem('versatil_ca') || 'null'); } catch (e) {}
+    try { saved = JSON.parse(localStorage.getItem(this.lsKey('versatil_ca')) || 'null'); } catch (e) {}
     // tenta carregar a configuração compartilhada do Supabase (mesma em qualquer navegador/dispositivo)
     let shared = null;
     try { const rows = await this.api('GET', 'app_config', { query: "id=eq.shared&select=data" }); shared = rows && rows[0] && rows[0].data; } catch (e) { console.warn('[app_config] não foi possível carregar do Supabase:', e.message || e); }
@@ -4035,14 +4042,14 @@ class Component extends DCLogic {
       // Só grava local; o envio ao servidor acontece nas telas de edição (que já chamam
       // persistCA() explicitamente quando o usuário salva algo).
       try {
-        localStorage.setItem('versatil_ca', JSON.stringify({ conversas: this.state.conversas, agentes: this.state.agentes, canais: this.state.canais, gcalUrl: this.state.gcalUrl, gcalSecret: this.state.gcalSecret, driveApiKey: this.state.driveApiKey, brand: this.state.brand }));
+        localStorage.setItem(this.lsKey('versatil_ca'), JSON.stringify({ conversas: this.state.conversas, agentes: this.state.agentes, canais: this.state.canais, gcalUrl: this.state.gcalUrl, gcalSecret: this.state.gcalSecret, driveApiKey: this.state.driveApiKey, brand: this.state.brand }));
       } catch (e) {}
       if (this.wppConnectedChannel()) this.syncWppConversas(true);
     });
   }
   persistCA = () => {
     const snapshot = { conversas: this.state.conversas, agentes: this.state.agentes, canais: this.state.canais, gcalUrl: this.state.gcalUrl, gcalSecret: this.state.gcalSecret, driveApiKey: this.state.driveApiKey, brand: this.state.brand };
-    try { localStorage.setItem('versatil_ca', JSON.stringify(snapshot)); } catch (e) {}
+    try { localStorage.setItem(this.lsKey('versatil_ca'), JSON.stringify(snapshot)); } catch (e) {}
     // sincroniza com o Supabase JÁ (sem debounce) — config compartilhada (agentes/canais) e
     // as conversas (cada uma na sua própria linha, tabela "conversas", chave = telefone).
     // Agendamentos tem tabela própria (ver loadAgendamentos/addAgendamento/updateAgendamento)
@@ -4155,7 +4162,7 @@ class Component extends DCLogic {
   async loadCatalogo(isRetry) {
     let saved = null;
     if (!isRetry) {
-      try { saved = JSON.parse(localStorage.getItem('versatil_catalogo') || 'null'); } catch (e) {}
+      try { saved = JSON.parse(localStorage.getItem(this.lsKey('versatil_catalogo')) || 'null'); } catch (e) {}
       if (saved) {
         const cat = Array.isArray(saved) ? saved : (saved.catalogo || []);
         const tags = Array.isArray(saved) ? [] : (saved.tags || []);
@@ -4170,7 +4177,7 @@ class Component extends DCLogic {
         const shared = rows && rows[0] && rows[0].data;
         const list = shared && Array.isArray(shared.catalogo) ? this.normCatalogo(shared.catalogo) : [];
         const tags = (shared && Array.isArray(shared.tags)) ? shared.tags : [];
-        this.setState({ catalogo: list, catalogoTags: tags, catalogoLoadError: false }, () => { try { localStorage.setItem('versatil_catalogo', JSON.stringify({ catalogo: list, tags })); } catch (e) {} });
+        this.setState({ catalogo: list, catalogoTags: tags, catalogoLoadError: false }, () => { try { localStorage.setItem(this.lsKey('versatil_catalogo'), JSON.stringify({ catalogo: list, tags })); } catch (e) {} });
         return;
       } catch (e) {
         console.warn('[catalogo] falha ao carregar do Supabase (tentativa ' + (tentativa + 1) + '/3):', e.message || e);
@@ -4181,7 +4188,7 @@ class Component extends DCLogic {
     this.toast('error', 'Não foi possível carregar o catálogo de produtos. Toque em "Tentar novamente".');
   }
   persistCatalogo = () => {
-    try { localStorage.setItem('versatil_catalogo', JSON.stringify({ catalogo: this.state.catalogo, tags: this.state.catalogoTags })); } catch (e) {}
+    try { localStorage.setItem(this.lsKey('versatil_catalogo'), JSON.stringify({ catalogo: this.state.catalogo, tags: this.state.catalogoTags })); } catch (e) {}
     // sem debounce: sincroniza já, pra não perder a alteração se a página for recarregada logo em seguida
     this.syncCatalogo(this.state.catalogo, this.state.catalogoTags);
   };
