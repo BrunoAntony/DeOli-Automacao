@@ -21,16 +21,19 @@
 //  nenhum número for configurado no app) com os dados do cliente,
 //  o resumo da conversa e a data do agendamento (se houver).
 //
-//  Endpoint após deploy: https://SEU-APP.vercel.app/api/webhook
-//  Configure essa URL no painel da uazapi como webhook da instância
+//  Endpoint após deploy: https://SEU-APP.vercel.app/api/webhook?canal=<webhook_key>
+//  Cada empresa/canal tem seu próprio "webhook_key" (tabela "canais" no
+//  Supabase) — é isso que identifica qual empresa recebeu a mensagem e
+//  quais credenciais uazapi/config usar. Configure essa URL completa (com
+//  o ?canal=) no painel da uazapi como webhook da instância daquela empresa
 //  (eventos de "mensagem recebida").
 // ============================================================
 
 // ----- Variáveis de ambiente (defina na Vercel) -----
 //  GEMINI_API_KEY        chave do Google AI (Gemini) — único lugar onde ela mora;
 //                        o app não guarda/envia mais chave nenhuma            [obrigatório]
-//  UAZAPI_BASE_URL       ex: https://versatil.uazapi.com            [obrigatório]
-//  UAZAPI_INSTANCE_TOKEN token da instância (enviar/baixar mídia)   [obrigatório]
+//  UAZAPI_BASE_URL       usado só como fallback se a URL não tiver ?canal=  [opcional]
+//  UAZAPI_INSTANCE_TOKEN usado só como fallback se a URL não tiver ?canal=  [opcional]
 //  AGENT_PROMPT          prompt de sistema do agente                [recomendado]
 //  GEMINI_MODEL          opcional (default: gemini-1.5-flash)
 //  AGENT_TEMPERATURE     opcional (default: 0.5)
@@ -52,6 +55,7 @@ const SUPA_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 // Supabase, mas o webhook precisa continuar lendo o catálogo sem login.
 const SUPA_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || SUPA_ANON_KEY;
 const { readConfig } = require('./_configStore');
+const { resolveContext } = require('./_empresa');
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -78,8 +82,21 @@ module.exports = async (req, res) => {
       || (msg.message && (msg.message.conversation || (msg.message.extendedTextMessage && msg.message.extendedTextMessage.text))) || '';
 
     if (!from) return res.status(200).json({ ignored: true, reason: 'sem remetente' });
+
+    // resolve qual empresa/canal recebeu essa mensagem — vem do parâmetro
+    // ?canal=<webhook_key> registrado no painel da uazapi (ver tabela "canais");
+    // sem esse parâmetro, cai nas variáveis de ambiente (compatibilidade)
+    let canalKey = (req.query && req.query.canal) || '';
+    if (!canalKey && req.url) {
+      try { canalKey = new URL(req.url, 'http://x').searchParams.get('canal') || ''; } catch (e) {}
+    }
+    const ctx = await resolveContext(canalKey, SUPA_SERVICE_KEY);
+    const empresaId = ctx.empresaId;
+    const uazBase = String(ctx.uazBaseUrl || '').replace(/\/+$/, '');
+    const uazToken = ctx.uazToken || '';
+
     // config enviada pelo app (tem prioridade sobre as variáveis de ambiente)
-    const cfg = (await readConfig()) || {};
+    const cfg = (await readConfig(empresaId)) || {};
     // GEMINI_API_KEY é a única fonte da chave agora (o app não guarda/envia mais
     // chave nenhuma); cfg.geminiKey só existe por causa de configs antigas salvas
     // antes dessa mudança — nunca deve ter prioridade sobre a variável de ambiente
@@ -96,7 +113,7 @@ module.exports = async (req, res) => {
 
     // conversa já transferida para um humano (pedido do cliente, IA sem resposta, ou
     // agendamento fechado) — não responde mais automaticamente até alguém devolver à IA no app
-    if (await conversaEstaComHumano(phoneFromJid(from))) {
+    if (await conversaEstaComHumano(phoneFromJid(from), empresaId)) {
       return res.status(200).json({ ignored: true, reason: 'conversa com atendente humano' });
     }
 
@@ -107,12 +124,12 @@ module.exports = async (req, res) => {
     // busca o histórico recente da conversa — sem isso, cada mensagem chegava
     // "zerada" pro Gemini e ele cumprimentava/se apresentava de novo toda vez.
     const msgId = msg.id || msg.messageid || msg.messageId || (msg.key && msg.key.id) || '';
-    uazapiMarkRead(from, msgId).catch(() => {});
-    const history = await fetchHistory(from, msgId);
+    uazapiMarkRead(uazBase, uazToken, from, msgId).catch(() => {});
+    const history = await fetchHistory(uazBase, uazToken, from, msgId);
     const historyNote = history ? ('\n\nHistórico recente da conversa (mais antigas primeiro):\n' + history) : '';
 
     // catálogo de produtos (categorias > subcategorias com fotos de modelos)
-    const catalogo = await fetchCatalogo();
+    const catalogo = await fetchCatalogo(empresaId);
     const catalogoText = buildCatalogoPrompt(catalogo);
 
     const jsonFormatNote = '\n\n== FORMATO DE RESPOSTA (OBRIGATÓRIO) ==\n'
@@ -156,7 +173,7 @@ module.exports = async (req, res) => {
 
     if (isAudio || isImage || isDoc) {
       if (!mediaUrl) return res.status(200).json({ ignored: true, reason: 'mídia sem URL' });
-      const bin = await downloadMedia(mediaUrl);
+      const bin = await downloadMedia(mediaUrl, uazToken);
       const b64 = Buffer.from(bin.buffer).toString('base64');
       const mime = mimetype || bin.contentType || (isAudio ? 'audio/ogg' : isImage ? 'image/jpeg' : 'application/pdf');
       const guia = isAudio ? 'O cliente enviou um ÁUDIO. Entenda o que ele diz e responda diretamente.'
@@ -180,7 +197,7 @@ module.exports = async (req, res) => {
     // classificação no funil de vendas — best-effort, nunca derruba a resposta ao cliente
     const estagio = (parsed && FUNIL_ESTAGIOS.includes(parsed.estagioFunil)) ? parsed.estagioFunil : null;
     if (estagio) {
-      upsertFunilCliente(telefone, nomeCliente, estagio).catch((e) => console.error('[funil] falha ao salvar estágio:', e.message || e));
+      upsertFunilCliente(telefone, nomeCliente, estagio, empresaId).catch((e) => console.error('[funil] falha ao salvar estágio:', e.message || e));
     }
 
     // transferência para atendente humano — cliente pediu, IA não soube responder, ou um
@@ -190,10 +207,10 @@ module.exports = async (req, res) => {
     const agendamentoFechado = !!(parsed && parsed.agendamentoFechado);
     const notifyNumber = cfg.notifyNumber || NOTIFY_NUMBER_ENV;
     if (AUTO_REPLY && (precisaHumano || agendamentoFechado)) {
-      marcarConversaHumana(telefone).catch((e) => console.error('[handoff] falha ao marcar conversa como humana:', e.message || e));
+      marcarConversaHumana(telefone, empresaId).catch((e) => console.error('[handoff] falha ao marcar conversa como humana:', e.message || e));
       if (agendamentoFechado) {
         const resumoConversa = (history ? history.split('\n').slice(-6).join(' ') : text || '').slice(0, 300);
-        createAgendamento(telefone, nomeCliente, (parsed && parsed.agendamentoData) || '', resumoConversa)
+        createAgendamento(telefone, nomeCliente, (parsed && parsed.agendamentoData) || '', resumoConversa, empresaId)
           .catch((e) => console.error('[agendamento] falha ao salvar:', e.message || e));
       }
       if (notifyNumber) {
@@ -205,7 +222,7 @@ module.exports = async (req, res) => {
           + 'Motivo: ' + motivo
           + (agendamentoData ? ('\nData do agendamento: ' + agendamentoData) : '')
           + (history ? ('\n\nResumo da conversa:\n' + history + '\nCliente: ' + text) : ('\n\nÚltima mensagem do cliente: ' + text));
-        notifyHuman(notifyNumber, resumoMsg).catch((e) => console.error('[handoff] falha ao notificar:', e.message || e));
+        notifyHuman(uazBase, uazToken, notifyNumber, resumoMsg).catch((e) => console.error('[handoff] falha ao notificar:', e.message || e));
       } else {
         console.warn('[handoff] nenhum número de notificação configurado (aba Ferramentas do agente) — aviso não enviado');
       }
@@ -213,13 +230,13 @@ module.exports = async (req, res) => {
 
     let replied = false;
     let imagesSent = 0;
-    if (AUTO_REPLY && reply && process.env.UAZAPI_BASE_URL && process.env.UAZAPI_INSTANCE_TOKEN) {
+    if (AUTO_REPLY && reply && uazBase && uazToken) {
       // espera um pouco antes de responder, pra não parecer instantâneo/robótico —
       // mostra "digitando…" durante essa espera, pra parecer alguém realmente escrevendo
       const delaySec = Math.min(10, Math.max(2, Number(cfg.respostaDelay) || 3));
-      uazapiSetPresence(from, 'composing').catch(() => {});
+      uazapiSetPresence(uazBase, uazToken, from, 'composing').catch(() => {});
       await new Promise((r) => setTimeout(r, delaySec * 1000));
-      await uazapiSendText(from, reply);
+      await uazapiSendText(uazBase, uazToken, from, reply);
       replied = true;
       if (wantsImages) {
         const sub = findSubcategoria(catalogo, parsed.subcategoriaId);
@@ -242,7 +259,7 @@ module.exports = async (req, res) => {
           }
         }
         for (const dataUrl of imgs) {
-          await uazapiSendImage(from, dataUrl);
+          await uazapiSendImage(uazBase, uazToken, from, dataUrl);
           imagesSent++;
           await new Promise((r) => setTimeout(r, 500)); // evita rajada/flood na uazapi
         }
@@ -325,10 +342,10 @@ function phoneFromJid(jid) {
   return digits ? ('+' + digits) : '';
 }
 
-async function conversaEstaComHumano(telefone) {
-  if (!telefone) return false;
+async function conversaEstaComHumano(telefone, empresaId) {
+  if (!telefone || !empresaId) return false;
   try {
-    const r = await fetch(SUPA_URL + '/rest/v1/conversas?telefone=eq.' + encodeURIComponent(telefone) + '&select=dados', {
+    const r = await fetch(SUPA_URL + '/rest/v1/conversas?telefone=eq.' + encodeURIComponent(telefone) + '&empresa_id=eq.' + encodeURIComponent(empresaId) + '&select=dados', {
       headers: { apikey: SUPA_ANON_KEY, Authorization: 'Bearer ' + SUPA_SERVICE_KEY },
     });
     if (!r.ok) return false;
@@ -341,31 +358,14 @@ async function conversaEstaComHumano(telefone) {
 // service_role não carrega um empresa_id no token (é assim que o Supabase
 // identifica multi-tenant), então todo INSERT feito por aqui precisa mandar
 // empresa_id explicitamente — sem isso, o gatilho do banco não consegue
-// preenchê-lo sozinho e a gravação falha. Por enquanto só existe 1 empresa;
-// quando o roteamento por canal (Fase 3) entrar, isso vira o empresa_id
-// resolvido a partir do canal que recebeu a mensagem.
-let _empresaIdCache = null;
-async function getEmpresaId() {
-  if (_empresaIdCache) return _empresaIdCache;
-  try {
-    const r = await fetch(SUPA_URL + '/rest/v1/empresas?select=id&limit=1', {
-      headers: { apikey: SUPA_ANON_KEY, Authorization: 'Bearer ' + SUPA_SERVICE_KEY },
-    });
-    if (!r.ok) return null;
-    const rows = await r.json();
-    _empresaIdCache = rows && rows[0] && rows[0].id;
-    return _empresaIdCache || null;
-  } catch (e) { return null; }
-}
-
-async function upsertFunilCliente(telefone, nome, estagio) {
-  if (!telefone) return;
-  const empresa_id = await getEmpresaId();
-  if (!empresa_id) return;
+// preenchê-lo sozinho e a gravação falha. empresaId vem de resolveContext(),
+// já resolvido a partir do canal que recebeu a mensagem.
+async function upsertFunilCliente(telefone, nome, estagio, empresaId) {
+  if (!telefone || !empresaId) return;
   await fetch(SUPA_URL + '/rest/v1/funil_clientes', {
     method: 'POST',
     headers: { apikey: SUPA_ANON_KEY, Authorization: 'Bearer ' + SUPA_SERVICE_KEY, 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates,return=minimal' },
-    body: JSON.stringify({ telefone, nome: nome || telefone, estagio, empresa_id, updated_at: new Date().toISOString() }),
+    body: JSON.stringify({ telefone, nome: nome || telefone, estagio, empresa_id: empresaId, updated_at: new Date().toISOString() }),
   });
 }
 
@@ -373,23 +373,21 @@ async function upsertFunilCliente(telefone, nome, estagio) {
 // fechou uma data — antes disso só existia o aviso por WhatsApp, o
 // agendamento nunca ficava salvo em lugar nenhum se ninguém estivesse
 // com o app aberto naquela conversa
-async function createAgendamento(telefone, nome, quando, resumo) {
-  if (!telefone) return;
-  const empresa_id = await getEmpresaId();
-  if (!empresa_id) return;
+async function createAgendamento(telefone, nome, quando, resumo, empresaId) {
+  if (!telefone || !empresaId) return;
   await fetch(SUPA_URL + '/rest/v1/agendamentos', {
     method: 'POST',
     headers: { apikey: SUPA_ANON_KEY, Authorization: 'Bearer ' + SUPA_SERVICE_KEY, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-    body: JSON.stringify({ telefone, nome: nome || telefone, quando: quando || '', resumo: resumo || '', origem: 'IA', status: 'ativo', empresa_id }),
+    body: JSON.stringify({ telefone, nome: nome || telefone, quando: quando || '', resumo: resumo || '', origem: 'IA', status: 'ativo', empresa_id: empresaId }),
   });
 }
 
 // marca a conversa como "com humano" na tabela conversas (mesma linha que o app lê/escreve) —
 // só atualiza uma linha que já existe (lê e reescreve o mesmo "dados" com o campo alterado),
 // nunca cria uma linha nova, para não gravar um snapshot de conversa incompleto/sem mensagens
-async function marcarConversaHumana(telefone) {
-  if (!telefone) return;
-  const r = await fetch(SUPA_URL + '/rest/v1/conversas?telefone=eq.' + encodeURIComponent(telefone) + '&select=dados', {
+async function marcarConversaHumana(telefone, empresaId) {
+  if (!telefone || !empresaId) return;
+  const r = await fetch(SUPA_URL + '/rest/v1/conversas?telefone=eq.' + encodeURIComponent(telefone) + '&empresa_id=eq.' + encodeURIComponent(empresaId) + '&select=dados', {
     headers: { apikey: SUPA_ANON_KEY, Authorization: 'Bearer ' + SUPA_SERVICE_KEY },
   });
   if (!r.ok) return;
@@ -397,21 +395,22 @@ async function marcarConversaHumana(telefone) {
   const dados = rows && rows[0] && rows[0].dados;
   if (!dados) return; // conversa ainda não sincronizada pelo app — nada a atualizar ainda
   const novoDados = Object.assign({}, dados, { humano: true, iaAtiva: false, resolvida: false, _localCtrl: true });
-  await fetch(SUPA_URL + '/rest/v1/conversas?telefone=eq.' + encodeURIComponent(telefone), {
+  await fetch(SUPA_URL + '/rest/v1/conversas?telefone=eq.' + encodeURIComponent(telefone) + '&empresa_id=eq.' + encodeURIComponent(empresaId), {
     method: 'PATCH',
     headers: { apikey: SUPA_ANON_KEY, Authorization: 'Bearer ' + SUPA_SERVICE_KEY, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
     body: JSON.stringify({ dados: novoDados, updated_at: new Date().toISOString() }),
   });
 }
 
-async function notifyHuman(number, text) {
-  if (!number || !process.env.UAZAPI_BASE_URL || !process.env.UAZAPI_INSTANCE_TOKEN) return;
-  await uazapiSendText(number, text);
+async function notifyHuman(base, token, number, text) {
+  if (!number || !base || !token) return;
+  await uazapiSendText(base, token, number, text);
 }
 
-async function fetchCatalogo() {
+async function fetchCatalogo(empresaId) {
+  if (!empresaId) return [];
   try {
-    const r = await fetch(SUPA_URL + '/rest/v1/app_config?id=eq.produtos_catalogo&select=data', {
+    const r = await fetch(SUPA_URL + '/rest/v1/app_config?id=eq.produtos_catalogo&empresa_id=eq.' + encodeURIComponent(empresaId) + '&select=data', {
       headers: { apikey: SUPA_ANON_KEY, Authorization: 'Bearer ' + SUPA_SERVICE_KEY },
     });
     if (!r.ok) return [];
@@ -421,9 +420,7 @@ async function fetchCatalogo() {
   } catch (e) { return []; }
 }
 
-async function fetchHistory(chatid, excludeId) {
-  const base = String(process.env.UAZAPI_BASE_URL || '').replace(/\/+$/, '');
-  const token = process.env.UAZAPI_INSTANCE_TOKEN;
+async function fetchHistory(base, token, chatid, excludeId) {
   if (!base || !token || !chatid) return '';
   try {
     const r = await fetch(base + '/message/find', {
@@ -449,9 +446,9 @@ async function fetchHistory(chatid, excludeId) {
   } catch (e) { return ''; }
 }
 
-async function downloadMedia(url) {
+async function downloadMedia(url, token) {
   const headers = {};
-  if (process.env.UAZAPI_INSTANCE_TOKEN) headers.token = process.env.UAZAPI_INSTANCE_TOKEN;
+  if (token) headers.token = token;
   let r = await fetch(url, { headers });
   if (!r.ok) r = await fetch(url);
   if (!r.ok) throw new Error('Falha ao baixar mídia: ' + r.status);
@@ -493,13 +490,12 @@ async function geminiGenerate(system, parts, key, model, temperature, jsonMode) 
 
 // marca a(s) mensagem(ns) recebida(s) como lida (check azul) — best-effort,
 // nunca derruba a resposta se a uazapi não reconhecer o endpoint/formato
-async function uazapiMarkRead(chatid, messageId) {
-  if (!messageId || !process.env.UAZAPI_BASE_URL || !process.env.UAZAPI_INSTANCE_TOKEN) return;
-  const base = String(process.env.UAZAPI_BASE_URL || '').replace(/\/+$/, '');
+async function uazapiMarkRead(base, token, chatid, messageId) {
+  if (!messageId || !base || !token) return;
   try {
     const r = await fetch(base + '/message/markread', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', token: process.env.UAZAPI_INSTANCE_TOKEN },
+      headers: { 'Content-Type': 'application/json', token: token },
       body: JSON.stringify({ id: [messageId], number: chatid }),
     });
     if (!r.ok) console.warn('[uazapi markread] não confirmado:', r.status, await r.text());
@@ -507,34 +503,31 @@ async function uazapiMarkRead(chatid, messageId) {
 }
 
 // mostra "digitando…" pro cliente enquanto a IA "pensa" a resposta — best-effort
-async function uazapiSetPresence(to, presence) {
-  if (!to || !process.env.UAZAPI_BASE_URL || !process.env.UAZAPI_INSTANCE_TOKEN) return;
-  const base = String(process.env.UAZAPI_BASE_URL || '').replace(/\/+$/, '');
+async function uazapiSetPresence(base, token, to, presence) {
+  if (!to || !base || !token) return;
   try {
     const r = await fetch(base + '/chat/presence', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', token: process.env.UAZAPI_INSTANCE_TOKEN },
+      headers: { 'Content-Type': 'application/json', token: token },
       body: JSON.stringify({ number: to, presence: presence }),
     });
     if (!r.ok) console.warn('[uazapi presence] não confirmado:', r.status, await r.text());
   } catch (e) { console.warn('[uazapi presence] falhou:', e.message || e); }
 }
 
-async function uazapiSendText(to, text) {
-  const base = String(process.env.UAZAPI_BASE_URL || '').replace(/\/+$/, '');
+async function uazapiSendText(base, token, to, text) {
   const r = await fetch(base + '/send/text', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', token: process.env.UAZAPI_INSTANCE_TOKEN },
+    headers: { 'Content-Type': 'application/json', token: token },
     body: JSON.stringify({ number: to, text: text }),
   });
   if (!r.ok) console.error('[uazapi send] falhou:', r.status, await r.text());
 }
 
-async function uazapiSendImage(to, dataUrl) {
-  const base = String(process.env.UAZAPI_BASE_URL || '').replace(/\/+$/, '');
+async function uazapiSendImage(base, token, to, dataUrl) {
   const r = await fetch(base + '/send/media', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', token: process.env.UAZAPI_INSTANCE_TOKEN },
+    headers: { 'Content-Type': 'application/json', token: token },
     body: JSON.stringify({ number: to, type: 'image', file: dataUrl }),
   });
   if (!r.ok) console.error('[uazapi send image] falhou:', r.status, await r.text());

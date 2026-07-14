@@ -1676,7 +1676,7 @@
 <x-dc>
 <helmet>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/dist/tabler-icons.min.css">
-<script>window.__VERSATIL_BUILD__ = "1783989200000";</script>
+<script>window.__VERSATIL_BUILD__ = "1783995000000";</script>
 <style>
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;height:100%;}
@@ -5009,7 +5009,14 @@ class Component extends DCLogic {
     (agent.canais || []).forEach(cid => { const ch = this.chById(cid); if (ch && ch.uazapi && ch.uazapi.webhookUrl) webhookUrl = ch.uazapi.webhookUrl; });
     if (!webhookUrl) { const w = (this.state.canais || []).find(c => c.uazapi && c.uazapi.webhookUrl); if (w) webhookUrl = w.uazapi.webhookUrl; }
     if (!webhookUrl) return; // sem webhook configurado — nada a sincronizar
-    const configUrl = webhookUrl.replace(/\/api\/webhook\/?$/, '/api/config').replace(/\/webhook\/?$/, '/config');
+    // troca só o caminho (/webhook -> /config), preservando o ?canal= da URL —
+    // é isso que identifica pra qual empresa essa configuração pertence
+    let configUrl = '';
+    try {
+      const u = new URL(webhookUrl);
+      u.pathname = u.pathname.replace(/\/webhook\/?$/, '/config');
+      configUrl = u.toString();
+    } catch (e) { configUrl = webhookUrl.replace(/\/api\/webhook\/?$/, '/api/config').replace(/\/webhook\/?$/, '/config'); }
     const payload = {
       prompt: this.buildAgentPrompt(agent, { multimodal: agent.ferramentas && agent.ferramentas.midia, whatsapp: true }),
       // a chave do Gemini não vem mais do app — o webhook usa a variável de ambiente
@@ -5085,21 +5092,40 @@ class Component extends DCLogic {
     }
   }
   // --- conexão WhatsApp via uazapi ---
+  WEBHOOK_BASE_URL = 'https://webhook-blond-pi.vercel.app/api/webhook';
+  // grava/atualiza as credenciais desse canal na tabela "canais" (Supabase) — é o que o
+  // /api/webhook usa pra saber de qual empresa é cada mensagem recebida. Devolve o
+  // webhook_key da empresa atual (gerado pelo banco na primeira vez).
+  async syncCanalToSupabase(uaz) {
+    if (!uaz || !uaz.baseUrl || !uaz.instanceToken) return null;
+    try {
+      const existing = await this.api('GET', 'canais', { query: 'select=id,webhook_key&limit=1' });
+      const body = { uazapi_base_url: uaz.baseUrl, uazapi_instance_token: uaz.instanceToken, nome: 'WhatsApp' };
+      if (existing && existing[0]) {
+        await this.api('PATCH', 'canais', { id: existing[0].id, body });
+        return existing[0].webhook_key;
+      }
+      const rows = await this.api('POST', 'canais', { body, query: null });
+      return (rows && rows[0] && rows[0].webhook_key) || null;
+    } catch (e) { console.warn('[canais] falha ao sincronizar canal pro webhook:', e.message || e); return null; }
+  }
   async registrarWebhook() {
     const f = this.state.form;
-    const url = ((f.uazapi && f.uazapi.webhookUrl) || '').trim();
-    if (!url) return this.toast('error', 'Informe a URL do webhook (ex: https://seu-webhook.vercel.app/api/webhook)');
-    if (!/^https?:\/\//i.test(url)) return this.toast('error', 'A URL do webhook deve começar com https://');
     const base = this.uaBaseFor(f.uazapi);
     const token = (f.uazapi && f.uazapi.instanceToken || '').trim();
     if (!base || !token) return this.toast('error', 'Conecte o WhatsApp (Instance Token) antes de registrar o webhook.');
     this.setState({ webhookBusy: true });
     try {
+      // a URL agora é gerada automaticamente com o identificador da empresa (?canal=),
+      // pra cada empresa ter seu próprio canal isolado no webhook 24/7
+      const webhookKey = await this.syncCanalToSupabase({ baseUrl: base, instanceToken: token });
+      const url = webhookKey ? (this.WEBHOOK_BASE_URL + '?canal=' + webhookKey) : ((f.uazapi && f.uazapi.webhookUrl) || '').trim();
+      if (!url) return this.toast('error', 'Não foi possível gerar a URL do webhook — tente novamente em instantes.');
       await this.uaFetch(base, '/webhook', 'POST', token, { enabled: true, url: url, events: ['messages'], excludeMessages: ['wasSentByApi'] });
       // salva a URL no canal
       const cid = f.id;
       if (cid) this.updateCanalUa(cid, { webhookUrl: url });
-      this.setState(s => ({ webhookBusy: false, form: Object.assign({}, s.form, { uazapi: Object.assign({}, s.form.uazapi, { webhookRegistered: true }) }) }));
+      this.setState(s => ({ webhookBusy: false, form: Object.assign({}, s.form, { uazapi: Object.assign({}, s.form.uazapi, { webhookUrl: url, webhookRegistered: true }) }) }));
       this.toast('success', 'Webhook registrado! O agente responderá automaticamente 24/7.');
     } catch (e) {
       this.setState({ webhookBusy: false });
