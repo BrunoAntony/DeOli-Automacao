@@ -107,6 +107,7 @@ module.exports = async (req, res) => {
     // busca o histórico recente da conversa — sem isso, cada mensagem chegava
     // "zerada" pro Gemini e ele cumprimentava/se apresentava de novo toda vez.
     const msgId = msg.id || msg.messageid || msg.messageId || (msg.key && msg.key.id) || '';
+    uazapiMarkRead(from, msgId).catch(() => {});
     const history = await fetchHistory(from, msgId);
     const historyNote = history ? ('\n\nHistórico recente da conversa (mais antigas primeiro):\n' + history) : '';
 
@@ -213,8 +214,10 @@ module.exports = async (req, res) => {
     let replied = false;
     let imagesSent = 0;
     if (AUTO_REPLY && reply && process.env.UAZAPI_BASE_URL && process.env.UAZAPI_INSTANCE_TOKEN) {
-      // espera um pouco antes de responder, pra não parecer instantâneo/robótico
+      // espera um pouco antes de responder, pra não parecer instantâneo/robótico —
+      // mostra "digitando…" durante essa espera, pra parecer alguém realmente escrevendo
       const delaySec = Math.min(10, Math.max(2, Number(cfg.respostaDelay) || 3));
+      uazapiSetPresence(from, 'composing').catch(() => {});
       await new Promise((r) => setTimeout(r, delaySec * 1000));
       await uazapiSendText(from, reply);
       replied = true;
@@ -486,6 +489,35 @@ async function geminiGenerate(system, parts, key, model, temperature, jsonMode) 
   if (!r.ok) throw new Error('Gemini: ' + (data.error && data.error.message || r.status));
   const out = data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts || [];
   return out.map(p => p.text || '').join('').trim();
+}
+
+// marca a(s) mensagem(ns) recebida(s) como lida (check azul) — best-effort,
+// nunca derruba a resposta se a uazapi não reconhecer o endpoint/formato
+async function uazapiMarkRead(chatid, messageId) {
+  if (!messageId || !process.env.UAZAPI_BASE_URL || !process.env.UAZAPI_INSTANCE_TOKEN) return;
+  const base = String(process.env.UAZAPI_BASE_URL || '').replace(/\/+$/, '');
+  try {
+    const r = await fetch(base + '/message/markread', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', token: process.env.UAZAPI_INSTANCE_TOKEN },
+      body: JSON.stringify({ id: [messageId], number: chatid }),
+    });
+    if (!r.ok) console.warn('[uazapi markread] não confirmado:', r.status, await r.text());
+  } catch (e) { console.warn('[uazapi markread] falhou:', e.message || e); }
+}
+
+// mostra "digitando…" pro cliente enquanto a IA "pensa" a resposta — best-effort
+async function uazapiSetPresence(to, presence) {
+  if (!to || !process.env.UAZAPI_BASE_URL || !process.env.UAZAPI_INSTANCE_TOKEN) return;
+  const base = String(process.env.UAZAPI_BASE_URL || '').replace(/\/+$/, '');
+  try {
+    const r = await fetch(base + '/chat/presence', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', token: process.env.UAZAPI_INSTANCE_TOKEN },
+      body: JSON.stringify({ number: to, presence: presence }),
+    });
+    if (!r.ok) console.warn('[uazapi presence] não confirmado:', r.status, await r.text());
+  } catch (e) { console.warn('[uazapi presence] falhou:', e.message || e); }
 }
 
 async function uazapiSendText(to, text) {
