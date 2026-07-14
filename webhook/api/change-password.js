@@ -35,7 +35,7 @@ module.exports = async (req, res) => {
     if (!currentPassword || !newPassword) return res.status(400).json({ error: 'Informe a senha atual e a nova senha' });
     if (newPassword.length < 6) return res.status(400).json({ error: 'A nova senha precisa ter pelo menos 6 caracteres' });
 
-    const r = await fetch(SUPA_URL + '/rest/v1/app_users?username=eq.' + encodeURIComponent(claims.username) + '&select=id,username,password_hash,password_salt', {
+    const r = await fetch(SUPA_URL + '/rest/v1/app_users?username=eq.' + encodeURIComponent(claims.username) + '&select=id,username,password_hash,password_salt,must_change_password', {
       headers: { apikey: SUPA_ANON_KEY, Authorization: 'Bearer ' + serviceKey },
     });
     if (!r.ok) throw new Error('Falha ao consultar usuário: ' + r.status);
@@ -51,10 +51,12 @@ module.exports = async (req, res) => {
 
     const newSalt = crypto.randomBytes(16).toString('hex');
     const newHash = crypto.scryptSync(newPassword, newSalt, 64).toString('hex');
+    // qualquer troca de senha bem-sucedida (voluntária ou a troca obrigatória da
+    // senha padrão "123" no primeiro login) libera must_change_password
     const up = await fetch(SUPA_URL + '/rest/v1/app_users?id=eq.' + encodeURIComponent(user.id), {
       method: 'PATCH',
       headers: { apikey: SUPA_ANON_KEY, Authorization: 'Bearer ' + serviceKey, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-      body: JSON.stringify({ password_hash: newHash, password_salt: newSalt }),
+      body: JSON.stringify({ password_hash: newHash, password_salt: newSalt, must_change_password: false }),
     });
     if (!up.ok) throw new Error('Falha ao atualizar senha: ' + up.status);
 

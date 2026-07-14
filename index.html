@@ -1676,7 +1676,7 @@
 <x-dc>
 <helmet>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/dist/tabler-icons.min.css">
-<script>window.__VERSATIL_BUILD__ = "1784001300000";</script>
+<script>window.__VERSATIL_BUILD__ = "1784007800000";</script>
 <style>
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;height:100%;}
@@ -2841,6 +2841,25 @@ input:focus,select:focus,textarea:focus{outline:2px solid #3b82f6;outline-offset
                 </div>
               </sc-if>
 
+              <!-- FUNCIONÁRIOS -->
+              <sc-if value="{{ isCfgFuncionarios }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-direction:column;gap:18px;">
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;">
+                    <div><h2 style="margin:0;font-size:20px;font-weight:700;display:flex;align-items:center;gap:9px;"><i class="ti ti-users" style="font-size:19px;color:var(--color-text-secondary);"></i>Funcionários</h2><p style="margin:4px 0 0;font-size:14px;color:var(--color-text-secondary);">Quem tem acesso a esta empresa e o nível de cada um.</p></div>
+                    <button onClick="{{ onNovoFuncionario }}" style="display:inline-flex;align-items:center;gap:7px;background:#1a2b42;color:#fff;border:none;border-radius:10px;padding:10px 16px;font-weight:700;font-size:13.5px;cursor:pointer;flex-shrink:0;"><i class="ti ti-user-plus" style="font-size:16px;"></i>Adicionar</button>
+                  </div>
+                  <sc-if value="{{ funcionariosEmpty }}" hint-placeholder-val="{{ false }}">
+                    <div style="padding:24px;text-align:center;color:var(--color-text-secondary);font-size:13.5px;background:var(--color-background-secondary);border-radius:9px;">Nenhum funcionário cadastrado ainda.</div>
+                  </sc-if>
+                  <sc-for list="{{ funcionariosList }}" as="u" hint-placeholder-count="2">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 15px;border:1px solid var(--color-border-tertiary);border-radius:9px;">
+                      <span style="font-size:13.5px;font-weight:600;">{{ u.username }}</span>
+                      <span style="{{ u.badgeStyle }}">{{ u.roleLabel }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-if>
+
             </div>
           </div>
         </div>
@@ -3432,6 +3451,22 @@ POLÍTICAS: trocas em até 7 dias com nota." style="padding:14px 15px;border:1px
             </div>
           </sc-if>
 
+          <!-- NOVO FUNCIONÁRIO -->
+          <sc-if value="{{ m_novofuncionario }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:16px;">
+              <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--color-text-secondary);">Usuário (login)
+                <input name="username" value="{{ form.username }}" onInput="{{ onFormChange }}" placeholder="ex: maria" style="padding:11px 13px;border:1px solid var(--color-border-tertiary);border-radius:9px;background:var(--color-background-primary);">
+              </label>
+              <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--color-text-secondary);">Nível de acesso
+                <select name="role" value="{{ form.role }}" onChange="{{ onFormChange }}" style="padding:11px 13px;border:1px solid var(--color-border-tertiary);border-radius:9px;background:var(--color-background-primary);cursor:pointer;">
+                  <option value="funcionario">Funcionário — acesso só a Atendimento/Funil/Agendamentos</option>
+                  <option value="admin">Administrador — acesso total</option>
+                </select>
+              </label>
+              <div style="display:flex;align-items:flex-start;gap:11px;background:var(--color-background-info);color:var(--color-text-info);border-radius:11px;padding:13px 15px;font-size:13px;line-height:1.5;"><i class="ti ti-info-circle" style="font-size:19px;flex-shrink:0;"></i>O usuário nasce com a senha padrão "123" e será obrigado a trocá-la no primeiro login.</div>
+            </div>
+          </sc-if>
+
           <!-- ENVIAR FOTOS DO CATÁLOGO NA CONVERSA (seleção múltipla) -->
           <sc-if value="{{ m_catpicker }}" hint-placeholder-val="{{ false }}">
             <div style="display:flex;flex-direction:column;gap:14px;">
@@ -3707,6 +3742,31 @@ POLÍTICAS: trocas em até 7 dias com nota." style="padding:14px 15px;border:1px
   </div>
 </sc-if>
 
+<!-- ============ TROCA DE SENHA OBRIGATÓRIA (primeiro login) ============ -->
+<sc-if value="{{ showForcePassword }}" hint-placeholder-val="{{ false }}">
+  <div style="height:100vh;width:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(160deg,#0a1220,#1a2b42);font-family:var(--font);padding:20px;">
+    <div style="width:100%;max-width:380px;background:var(--color-background-primary);border-radius:16px;padding:34px 30px;box-shadow:0 24px 60px rgba(0,0,0,.35);">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:26px;">
+        <div style="width:52px;height:52px;border-radius:14px;background:#1a2b42;display:flex;align-items:center;justify-content:center;"><i class="ti ti-key" style="font-size:26px;color:#fff;"></i></div>
+        <h1 style="margin:8px 0 0;font-size:19px;font-weight:700;">Defina sua senha</h1>
+        <p style="margin:0;font-size:13px;color:var(--color-text-secondary);text-align:center;">Você está usando a senha padrão — escolha uma nova pra continuar.</p>
+      </div>
+      <sc-if value="{{ forcePwError }}" hint-placeholder-val="{{ false }}">
+        <div style="background:var(--color-background-danger);color:var(--color-text-danger);border-radius:9px;padding:10px 13px;font-size:13px;margin-bottom:16px;">{{ forcePwError }}</div>
+      </sc-if>
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--color-text-secondary);">Nova senha
+          <input name="newPassword" type="password" value="{{ forcePwForm.newPassword }}" onInput="{{ onForcePwField }}" placeholder="pelo menos 6 caracteres" style="padding:12px 14px;border:1px solid var(--color-border-tertiary);border-radius:10px;background:var(--color-background-secondary);font-size:14px;">
+        </label>
+        <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--color-text-secondary);">Confirmar nova senha
+          <input name="confirmPassword" type="password" value="{{ forcePwForm.confirmPassword }}" onInput="{{ onForcePwField }}" placeholder="repita a senha" style="padding:12px 14px;border:1px solid var(--color-border-tertiary);border-radius:10px;background:var(--color-background-secondary);font-size:14px;">
+        </label>
+        <button onClick="{{ doForcePasswordChange }}" disabled="{{ forcePwBusy }}" style="{{ authBtnStyle }}">{{ forcePwBtnLabel }}</button>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
 <!-- ============ VERIFICANDO SESSÃO ============ -->
 <sc-if value="{{ authChecking }}" hint-placeholder-val="{{ true }}">
   <div style="height:100vh;width:100%;display:flex;align-items:center;justify-content:center;background:#0a1220;">
@@ -3723,6 +3783,9 @@ class Component extends DCLogic {
     authForm: { username: '', password: '' },
     authError: '',
     authBusy: false,
+    forcePwForm: { newPassword: '', confirmPassword: '' },
+    forcePwError: '',
+    forcePwBusy: false,
     accountMenuOpen: false,
     empresaMenuOpen: false,
     empresasDisponiveis: [],
@@ -3774,12 +3837,20 @@ class Component extends DCLogic {
 
   componentDidMount() { this.restoreSession(() => { if (this.state.authSession) this.boot(); }); }
   componentWillUnmount() { clearInterval(this._pollMsgs); clearInterval(this._updCheck); this.stopSSE(); }
+  FUNCIONARIO_TABS = ['atendimento', 'funil', 'agendamentos'];
   boot() {
     // boot() pode rodar mais de uma vez na mesma sessão (ex: ao trocar de empresa no
     // seletor) — sem limpar o que já estava rodando, cada troca empilhava mais um
     // intervalo/SSE duplicado, todos ativos ao mesmo tempo
     clearInterval(this._pollMsgs); clearInterval(this._updCheck); this.stopSSE();
-    this.loadAll(); this.seedAtendimento(); this.loadCatalogo(); this.loadFunil(); this.loadAgendamentos(); this.loadEmpresas();
+    // funcionário só enxerga Atendimento/Funil/Agendamentos — se a aba atual (ex:
+    // Dashboard, o padrão inicial) não for uma dessas, redireciona pra não cair numa
+    // tela que o RLS vai bloquear os dados
+    const s = this.state.authSession;
+    if (s && s.role === 'funcionario' && !s.isAdmin && this.FUNCIONARIO_TABS.indexOf(this.state.tab) < 0) {
+      this.setState({ tab: 'atendimento' });
+    }
+    this.loadAll(); this.seedAtendimento(); this.loadCatalogo(); this.loadFunil(); this.loadAgendamentos(); this.loadEmpresas(); this.loadUsuarios();
     setTimeout(() => this.checkRetornosIA(), 800);
     this._pollMsgs = setInterval(() => this.pollNovasMensagens(), 12000);
     this._updCheck = setInterval(() => this.checkForUpdate(), 60000);
@@ -3793,6 +3864,7 @@ class Component extends DCLogic {
   LOGIN_URL = 'https://webhook-blond-pi.vercel.app/api/login';
   EMPRESAS_URL = 'https://webhook-blond-pi.vercel.app/api/empresas';
   SWITCH_EMPRESA_URL = 'https://webhook-blond-pi.vercel.app/api/switch-empresa';
+  USERS_URL = 'https://webhook-blond-pi.vercel.app/api/users';
   async authSignIn(username, password) {
     const r = await fetch(this.LOGIN_URL, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -3803,7 +3875,7 @@ class Component extends DCLogic {
     return data;
   }
   saveSession(data, cb) {
-    const session = { access_token: data.access_token, expires_at: data.expires_at, username: data.username || '', empresa_id: data.empresa_id || '' };
+    const session = { access_token: data.access_token, expires_at: data.expires_at, username: data.username || '', empresa_id: data.empresa_id || '', role: data.role || 'admin', isAdmin: !!data.isAdmin, mustChangePassword: !!data.mustChangePassword };
     try { localStorage.setItem('versatil_auth', JSON.stringify(session)); } catch (e) {}
     // setState é assíncrono — quem chama boot() logo em seguida precisa esperar o
     // callback, senão as primeiras requisições saem com o token da sessão anterior
@@ -3844,7 +3916,9 @@ class Component extends DCLogic {
       const data = await this.authSignIn(username, password);
       this.saveSession(data, () => {
         this.setState({ authBusy: false, authForm: { username: '', password: '' } });
-        this.boot();
+        // com senha padrão pendente, não carrega o resto do app ainda —
+        // a tela de troca de senha obrigatória assume até o usuário trocar
+        if (!this.state.authSession || !this.state.authSession.mustChangePassword) this.boot();
       });
     } catch (e) {
       this.setState({ authBusy: false, authError: this.authFriendly(e) });
@@ -3855,6 +3929,37 @@ class Component extends DCLogic {
     clearInterval(this._pollMsgs); clearInterval(this._updCheck); this.stopSSE();
     this.setState({ authSession: null, authForm: { username: '', password: '' }, authError: '' });
   };
+  onForcePwField = (e) => { const n = e.target.name, v = e.target.value; this.setState(s => ({ forcePwForm: Object.assign({}, s.forcePwForm, { [n]: v }) })); };
+  async doForcePasswordChange() {
+    const f = this.state.forcePwForm || {};
+    const newPassword = f.newPassword || '';
+    const confirmPassword = f.confirmPassword || '';
+    if (!newPassword || newPassword.length < 6) { this.setState({ forcePwError: 'A nova senha precisa ter pelo menos 6 caracteres' }); return; }
+    if (newPassword !== confirmPassword) { this.setState({ forcePwError: 'As senhas não coincidem' }); return; }
+    this.setState({ forcePwBusy: true, forcePwError: '' });
+    try {
+      const r = await fetch(this.CHANGE_PASSWORD_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + this.state.authSession.access_token },
+        body: JSON.stringify({ currentPassword: '123', newPassword }),
+      });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(data.error || ('HTTP ' + r.status));
+      this.setState(s => ({
+        authSession: Object.assign({}, s.authSession, { mustChangePassword: false }),
+        forcePwBusy: false, forcePwForm: { newPassword: '', confirmPassword: '' },
+      }), () => {
+        try {
+          const saved = JSON.parse(localStorage.getItem('versatil_auth') || 'null');
+          if (saved) { saved.mustChangePassword = false; localStorage.setItem('versatil_auth', JSON.stringify(saved)); }
+        } catch (e) {}
+        this.toast('success', 'Senha definida com sucesso!');
+        this.boot();
+      });
+    } catch (e) {
+      this.setState({ forcePwBusy: false, forcePwError: e.message || String(e) });
+    }
+  }
   // ---- seletor de empresa (só aparece pra usuário admin) ----
   async loadEmpresas() {
     const token = this.state.authSession && this.state.authSession.access_token;
@@ -3894,6 +3999,35 @@ class Component extends DCLogic {
       this.toast('success', 'Empresa criada: ' + nome);
       this.loadEmpresas();
     } catch (e) { this.toast('error', 'Falha ao criar empresa: ' + (e.message || e)); }
+  }
+  // ---- funcionários (usuários da empresa, com hierarquia admin/funcionário) ----
+  async loadUsuarios() {
+    const S = this.state;
+    if (!S.authSession || (S.authSession.role !== 'admin' && !S.authSession.isAdmin)) return;
+    try {
+      const r = await fetch(this.USERS_URL, { headers: { Authorization: 'Bearer ' + S.authSession.access_token } });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(data.error || ('HTTP ' + r.status));
+      this.setState({ usuariosEmpresa: data.users || [] });
+    } catch (e) { console.warn('[users] falha ao carregar:', e.message || e); }
+  }
+  openNovoFuncionario() { this.setState({ modal: 'novo_funcionario', form: { username: '', role: 'funcionario' } }); }
+  async saveNovoFuncionario() {
+    const f = this.state.form || {};
+    const username = (f.username || '').trim();
+    if (!username) return this.toast('error', 'Informe o usuário');
+    try {
+      const r = await fetch(this.USERS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + this.state.authSession.access_token },
+        body: JSON.stringify({ username, role: f.role === 'admin' ? 'admin' : 'funcionario' }),
+      });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(data.error || ('HTTP ' + r.status));
+      this.setState({ modal: null, form: {} });
+      this.toast('success', 'Usuário "' + username + '" criado — senha padrão: ' + (data.defaultPassword || '123') + ' (ele(a) vai precisar trocar no primeiro login)');
+      this.loadUsuarios();
+    } catch (e) { this.toast('error', 'Falha ao criar usuário: ' + (e.message || e)); }
   }
   // ---- página "Configurações" (Perfil / Segurança / Preferências) ----
   CHANGE_PASSWORD_URL = 'https://webhook-blond-pi.vercel.app/api/change-password';
@@ -5651,6 +5785,7 @@ class Component extends DCLogic {
     if (m === 'novo_agendamento') return this.saveNovoAgendamento();
     if (m === 'gcal_config') return this.saveGcalConfig();
     if (m === 'nova_empresa') return this.saveNovaEmpresa();
+    if (m === 'novo_funcionario') return this.saveNovoFuncionario();
     if (m === 'drive_config') return this.saveDriveConfig();
     if (m === 'config_canal') return this.saveCanal();
     if (m === 'nova_categoria') return this.saveCategoria();
@@ -5724,8 +5859,15 @@ class Component extends DCLogic {
     const vm = {};
     // ---- autenticação (gate de tela inteira) ----
     vm.authChecking = !!S.authChecking;
-    vm.authed = !S.authChecking && !!S.authSession;
+    vm.showForcePassword = !S.authChecking && !!S.authSession && !!S.authSession.mustChangePassword;
+    vm.authed = !S.authChecking && !!S.authSession && !S.authSession.mustChangePassword;
     vm.showLogin = !S.authChecking && !S.authSession;
+    vm.forcePwForm = S.forcePwForm || { newPassword: '', confirmPassword: '' };
+    vm.forcePwError = S.forcePwError || '';
+    vm.forcePwBusy = !!S.forcePwBusy;
+    vm.forcePwBtnLabel = S.forcePwBusy ? 'Salvando…' : 'Definir senha e entrar';
+    vm.onForcePwField = this.onForcePwField;
+    vm.doForcePasswordChange = () => this.doForcePasswordChange();
     vm.authEmail = (S.authSession && S.authSession.username) || '';
     vm.authUsername = (S.authSession && S.authSession.username) || '';
     vm.authInitials = vm.authUsername ? vm.authUsername.slice(0, 2).toUpperCase() : '?';
@@ -5777,7 +5919,7 @@ class Component extends DCLogic {
     const atrasadasCount = D.compras.filter(c => c.status === 'Atrasada').length;
     const unreadTotal = (S.conversas || []).reduce((a, c) => a + (c.unread || 0), 0);
     const agentesAtivos = (S.agentes || []).filter(a => a.ativo).length;
-    const groupsDef = [
+    let groupsDef = [
       { key: 'principal', label: 'PRINCIPAL', items: [
         { key: 'dashboard', label: 'Dashboard', icon: 'ti-layout-dashboard' },
       ] },
@@ -5799,6 +5941,13 @@ class Component extends DCLogic {
         { key: 'produtos', label: 'Produtos', icon: 'ti-category' },
       ] },
     ];
+    // funcionário: acesso limitado só ao atendimento (Atendimento/Funil/Agendamentos —
+    // Agentes IA fica de fora porque é configuração, bloqueada pro papel dele no RLS)
+    if (S.authSession && S.authSession.role === 'funcionario' && !S.authSession.isAdmin) {
+      groupsDef = groupsDef
+        .filter(g => g.key === 'atendimento')
+        .map(g => Object.assign({}, g, { items: g.items.filter(it => it.key !== 'agentes') }));
+    }
     const og = S.openGroups || {};
     const navGroups = groupsDef.map(g => {
       const open = og[g.key] !== false;
@@ -5865,10 +6014,10 @@ class Component extends DCLogic {
       showAdd: ['vendas', 'compras', 'despesas', 'estoque', 'clientes', 'fornecedores', 'produtos'].includes(tab) && !S.viewCompra, addLabel: addLabels[tab] || '', openAdd: () => this.openAdd(),
       stop: (e) => e.stopPropagation(),
       // modal
-      showModal: !!S.modal, modalTitle: { nova_venda: 'Nova Venda', nova_compra: 'Nova Ordem de Compra', nova_despesa: 'Nova Despesa', novo_produto: 'Novo Produto', novo_cliente: 'Novo Cliente', novo_fornecedor: 'Novo Fornecedor', nova_categoria: (S.form && S.form._id) ? 'Editar Categoria' : 'Nova Categoria', subcategoria: (S.form && S.form._id) ? 'Editar Subcategoria' : 'Nova Subcategoria', config_agente: S.form && S.form.id ? 'Configurar Agente' : 'Novo Agente', config_canal: S.form && S.form._new ? 'Adicionar Canal' : 'Configurar Canal', conectar_wpp: 'Conectar WhatsApp', nova_conversa: 'Nova Conversa', renomear_conv: 'Renomear Contato', add_cliente_conv: 'Adicionar aos Clientes', excluir_conv: 'Excluir Conversa', novo_agendamento: 'Novo Agendamento', gcal_config: 'Sincronizar Google Agenda', drive_config: 'Fotos do Catálogo via Google Drive', catalogo_picker: 'Enviar fotos do catálogo', nova_empresa: 'Nova Empresa' }[S.modal] || '',
+      showModal: !!S.modal, modalTitle: { nova_venda: 'Nova Venda', nova_compra: 'Nova Ordem de Compra', nova_despesa: 'Nova Despesa', novo_produto: 'Novo Produto', novo_cliente: 'Novo Cliente', novo_fornecedor: 'Novo Fornecedor', nova_categoria: (S.form && S.form._id) ? 'Editar Categoria' : 'Nova Categoria', subcategoria: (S.form && S.form._id) ? 'Editar Subcategoria' : 'Nova Subcategoria', config_agente: S.form && S.form.id ? 'Configurar Agente' : 'Novo Agente', config_canal: S.form && S.form._new ? 'Adicionar Canal' : 'Configurar Canal', conectar_wpp: 'Conectar WhatsApp', nova_conversa: 'Nova Conversa', renomear_conv: 'Renomear Contato', add_cliente_conv: 'Adicionar aos Clientes', excluir_conv: 'Excluir Conversa', novo_agendamento: 'Novo Agendamento', gcal_config: 'Sincronizar Google Agenda', drive_config: 'Fotos do Catálogo via Google Drive', catalogo_picker: 'Enviar fotos do catálogo', nova_empresa: 'Nova Empresa', novo_funcionario: 'Novo Funcionário' }[S.modal] || '',
       m_venda: S.modal === 'nova_venda', m_compra: S.modal === 'nova_compra', m_despesa: S.modal === 'nova_despesa', m_produto: S.modal === 'novo_produto', m_cliente: S.modal === 'novo_cliente', m_fornecedor: S.modal === 'novo_fornecedor', m_categoria: S.modal === 'nova_categoria', m_subcategoria: S.modal === 'subcategoria',
       m_agente: S.modal === 'config_agente', m_canal: S.modal === 'config_canal', m_wpp: S.modal === 'conectar_wpp', m_novaconv: S.modal === 'nova_conversa',
-      m_renomear: S.modal === 'renomear_conv', m_addcli: S.modal === 'add_cliente_conv', m_excluirconv: S.modal === 'excluir_conv', m_agendamento: S.modal === 'novo_agendamento', m_gcal: S.modal === 'gcal_config', m_drive: S.modal === 'drive_config', m_catpicker: S.modal === 'catalogo_picker', m_novaempresa: S.modal === 'nova_empresa',
+      m_renomear: S.modal === 'renomear_conv', m_addcli: S.modal === 'add_cliente_conv', m_excluirconv: S.modal === 'excluir_conv', m_agendamento: S.modal === 'novo_agendamento', m_gcal: S.modal === 'gcal_config', m_drive: S.modal === 'drive_config', m_catpicker: S.modal === 'catalogo_picker', m_novaempresa: S.modal === 'nova_empresa', m_novofuncionario: S.modal === 'novo_funcionario',
       brandUploading: !!S.brandUploading, brandNotUploading: !S.brandUploading,
       brandUploadLabel: S.brandUploading ? 'Enviando…' : 'Escolher imagem',
       brandFormHasLogo: !!(S.form && S.form.logoUrl), brandFormNoLogo: !(S.form && S.form.logoUrl),
@@ -6704,20 +6853,35 @@ class Component extends DCLogic {
     vm.isConfiguracoes = tab === 'configuracoes';
     if (vm.isConfiguracoes) {
       const cs = S.configSection || 'perfil';
+      const souAdmin = !!(S.authSession && (S.authSession.role === 'admin' || S.authSession.isAdmin));
       const secDefs = [
         { k: 'perfil', label: 'Perfil', icon: 'ti-user' },
         { k: 'seguranca', label: 'Segurança', icon: 'ti-shield-lock' },
-        { k: 'preferencias', label: 'Preferências', icon: 'ti-palette' },
       ];
+      // Preferências (marca/cores) e Funcionários mexem em config administrativa,
+      // bloqueada por RLS pro papel de funcionário — nem mostra a aba pra ele
+      if (souAdmin) secDefs.push({ k: 'preferencias', label: 'Preferências', icon: 'ti-palette' });
+      if (souAdmin) secDefs.push({ k: 'funcionarios', label: 'Funcionários', icon: 'ti-users' });
       vm.configSecoes = secDefs.map(d => ({
         label: d.label, icon: d.icon, onClick: () => this.setConfigSection(d.k),
         style: { display: 'flex', alignItems: 'center', gap: '10px', width: '100%', border: 'none', cursor: 'pointer', textAlign: 'left', padding: '10px 13px', borderRadius: '9px', fontSize: '13.5px', fontWeight: 600, background: cs === d.k ? 'var(--color-background-info)' : 'transparent', color: cs === d.k ? 'var(--color-text-info)' : 'var(--color-text-secondary)' },
       }));
-      vm.isCfgPerfil = cs === 'perfil'; vm.isCfgSeguranca = cs === 'seguranca'; vm.isCfgPreferencias = cs === 'preferencias';
+      vm.isCfgPerfil = cs === 'perfil'; vm.isCfgSeguranca = cs === 'seguranca';
+      vm.isCfgPreferencias = souAdmin && cs === 'preferencias';
+      vm.isCfgFuncionarios = souAdmin && cs === 'funcionarios';
       vm.cfgUsername = this.nomeUsuario(this.currentUsername()) || S.authUsername || '—';
       vm.cfgUserInitials = vm.authInitials;
       vm.onSaveSeguranca = () => this.saveChangePassword();
       vm.onSavePreferencias = () => this.saveConfigSite();
+      if (vm.isCfgFuncionarios) {
+        const roleLabel = { admin: 'Administrador', funcionario: 'Funcionário' };
+        vm.funcionariosList = (S.usuariosEmpresa || []).map(u => ({
+          username: u.username, roleLabel: roleLabel[u.role] || u.role,
+          badgeStyle: { display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: '999px', fontSize: '11.5px', fontWeight: 700, background: u.role === 'admin' ? 'var(--color-background-info)' : 'var(--color-background-secondary)', color: u.role === 'admin' ? 'var(--color-text-info)' : 'var(--color-text-secondary)' },
+        }));
+        vm.funcionariosEmpty = vm.funcionariosList.length === 0;
+        vm.onNovoFuncionario = () => this.openNovoFuncionario();
+      }
     }
 
     return vm;

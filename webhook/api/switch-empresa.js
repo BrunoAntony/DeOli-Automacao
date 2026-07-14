@@ -61,7 +61,9 @@ module.exports = async (req, res) => {
     const newPayload = { aud: 'authenticated', role: 'authenticated', sub: user.id, username: user.username, empresa_id: empresa.id, iat: now, exp: exp };
     const access_token = jwt.sign(newPayload, jwtSecret);
 
-    return res.status(200).json({ access_token: access_token, expires_at: exp * 1000, username: user.username, empresa_id: empresa.id, empresaNome: empresa.nome });
+    // quem troca de empresa é sempre admin cross-empresa (só ele chega até aqui),
+    // então tem acesso total à empresa escolhida, independente do "role" da própria linha
+    return res.status(200).json({ access_token: access_token, expires_at: exp * 1000, username: user.username, empresa_id: empresa.id, empresaNome: empresa.nome, role: 'admin', isAdmin: true });
   } catch (e) {
     console.error('[switch-empresa] erro:', e);
     return res.status(500).json({ error: String((e && e.message) || e) });
