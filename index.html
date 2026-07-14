@@ -1676,7 +1676,7 @@
 <x-dc>
 <helmet>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/dist/tabler-icons.min.css">
-<script>window.__VERSATIL_BUILD__ = "1783964580654";</script>
+<script>window.__VERSATIL_BUILD__ = "1783974012000";</script>
 <style>
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;height:100%;}
@@ -3754,7 +3754,7 @@ class Component extends DCLogic {
     return data;
   }
   saveSession(data) {
-    const session = { access_token: data.access_token, expires_at: data.expires_at, username: data.username || '' };
+    const session = { access_token: data.access_token, expires_at: data.expires_at, username: data.username || '', empresa_id: data.empresa_id || '' };
     try { localStorage.setItem('versatil_auth', JSON.stringify(session)); } catch (e) {}
     this.setState({ authSession: session });
     return session;
@@ -4178,7 +4178,8 @@ class Component extends DCLogic {
   async uploadCatalogoImage(file, folder) {
     try {
       const ext = ((file.name || '').split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
-      const path = folder + '/' + Date.now() + '_' + Math.random().toString(36).slice(2, 8) + '.' + ext;
+      const empresaId = (this.state.authSession && this.state.authSession.empresa_id) || 'sem-empresa';
+      const path = empresaId + '/' + folder + '/' + Date.now() + '_' + Math.random().toString(36).slice(2, 8) + '.' + ext;
       const token = (this.state.authSession && this.state.authSession.access_token) || this.SUPA_KEY;
       const r = await fetch(this.SUPA_URL + '/storage/v1/object/catalogo/' + path, {
         method: 'POST',
