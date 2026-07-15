@@ -35,7 +35,7 @@ module.exports = async (req, res) => {
   if (req.method === 'GET') {
     if (!empresaId) return res.status(200).json({ ok: true, configured: false, config: null });
     const c = await readConfig(empresaId);
-    return res.status(200).json({ ok: true, configured: !!c, config: c ? { model: c.model, temperature: c.temperature, enabled: c.enabled, hasKey: !!c.geminiKey, hasDriveKey: !!c.driveApiKey, notifyNumber: c.notifyNumber || '', respostaDelay: (c.respostaDelay != null ? c.respostaDelay : 3), promptLen: (c.prompt || '').length } : null });
+    return res.status(200).json({ ok: true, configured: !!c, config: c ? { model: c.model, temperature: c.temperature, enabled: c.enabled, hasKey: !!c.geminiKey, hasDriveKey: !!c.driveApiKey, notifyNumber: c.notifyNumber || '', respostaDelay: (c.respostaDelay != null ? c.respostaDelay : 3), gerarImagemAtivo: !!c.gerarImagemAtivo, promptLen: (c.prompt || '').length } : null });
   }
   if (req.method !== 'POST') return res.status(405).json({ error: 'method not allowed' });
 
@@ -52,6 +52,7 @@ module.exports = async (req, res) => {
       driveApiKey: body.driveApiKey || '',
       notifyNumber: (body.notifyNumber || '').replace(/\D/g, ''),
       respostaDelay: Math.min(10, Math.max(2, Number(body.respostaDelay) || 3)),
+      gerarImagemAtivo: !!body.gerarImagemAtivo,
       updatedAt: Date.now(),
     };
     const okWrite = await writeConfig(empresaId, cfg);

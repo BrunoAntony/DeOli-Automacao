@@ -1676,7 +1676,7 @@
 <x-dc>
 <helmet>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/dist/tabler-icons.min.css">
-<script>window.__VERSATIL_BUILD__ = "1784021000000";</script>
+<script>window.__VERSATIL_BUILD__ = "1784023600000";</script>
 <style>
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;height:100%;}
@@ -5315,6 +5315,7 @@ class Component extends DCLogic {
       driveApiKey: (this.state.driveApiKey || '').trim(),
       notifyNumber: (agent.numeroNotificacao || '').replace(/\D/g, ''),
       respostaDelay: (agent.respostaDelay != null ? agent.respostaDelay : 3),
+      gerarImagemAtivo: !!(agent.ferramentas && agent.ferramentas.imagemIA),
     };
     try {
       const r = await fetch(configUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
@@ -6981,6 +6982,7 @@ class Component extends DCLogic {
         { k: 'pedidos', nome: 'Status de pedidos', desc: 'Informar situação de compras/pedidos', icon: 'ti-truck' },
         { k: 'midia', nome: 'Entender mídia e áudio', desc: 'Interpreta imagens, documentos e transcreve áudios recebidos', icon: 'ti-photo-ai' },
         { k: 'humano', nome: 'Transferir p/ humano', desc: 'Encaminhar para atendente quando necessário', icon: 'ti-user-check' },
+        { k: 'imagemIA', nome: 'Gerar imagens com IA', desc: 'Cria uma imagem sob medida quando o cliente pede algo fora do catálogo (consome mais da cota do Gemini)', icon: 'ti-sparkles' },
       ];
       vm.aeFerramentas = ferrDefs.map(d => {
         const on = !!(f.ferramentas || {})[d.k];

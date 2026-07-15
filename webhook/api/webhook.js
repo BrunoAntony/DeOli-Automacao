@@ -134,7 +134,7 @@ module.exports = async (req, res) => {
 
     const jsonFormatNote = '\n\n== FORMATO DE RESPOSTA (OBRIGATÓRIO) ==\n'
       + 'Responda SOMENTE com um JSON válido (sem texto fora do JSON), no formato exato:\n'
-      + '{"reply": "sua resposta em português do Brasil, curta e profissional, como mensagem de WhatsApp", "sendImages": true ou false, "subcategoriaId": "id da subcategoria escolhida, ou null", "estilo": "tag do estilo pedido pelo cliente (ex: floral, clássico), ou null", "estagioFunil": "estágio atual do cliente no funil de vendas", "precisaHumano": true ou false, "motivoHumano": "motivo curto, ou null", "agendamentoFechado": true ou false, "agendamentoData": "data/horário combinado, ou null"}\n'
+      + '{"reply": "sua resposta em português do Brasil, curta e profissional, como mensagem de WhatsApp", "sendImages": true ou false, "subcategoriaId": "id da subcategoria escolhida, ou null", "estilo": "tag do estilo pedido pelo cliente (ex: floral, clássico), ou null", "estagioFunil": "estágio atual do cliente no funil de vendas", "precisaHumano": true ou false, "motivoHumano": "motivo curto, ou null", "agendamentoFechado": true ou false, "agendamentoData": "data/horário combinado, ou null", "gerarImagem": true ou false, "promptImagem": "descrição em inglês da imagem a gerar, ou null"}\n'
       + (catalogoText
         ? ('Marque "sendImages": true e escolha o "subcategoriaId" SOMENTE quando o cliente pedir explicitamente para ver fotos, exemplos ou modelos de produtos, E uma das subcategorias abaixo corresponder claramente ao que ele pediu na conversa. Se o cliente mencionar um estilo específico (ex: "quero algo floral", "tem modelo minimalista?") e essa tag aparecer na lista de tags da subcategoria, preencha "estilo" com essa tag (copie exatamente como está listado); caso contrário deixe "estilo": null e será enviada uma foto geral da subcategoria. Preste atenção ao contexto: nunca envie fotos de uma categoria/subcategoria diferente da que o cliente está perguntando. Se o cliente não pediu fotos/exemplos, ou nenhuma subcategoria bate com o pedido, use "sendImages": false e "subcategoriaId": null.\n\n== CATÁLOGO DE PRODUTOS DISPONÍVEL (categoria > subcategoria [id]: descrição (tags de estilo disponíveis, se houver)) ==\n' + catalogoText)
         : 'Não há catálogo de imagens cadastrado — sempre responda "sendImages": false e "subcategoriaId": null.')
@@ -149,7 +149,10 @@ module.exports = async (req, res) => {
       + '\n\n== TRANSFERÊNCIA PARA ATENDENTE HUMANO (OBRIGATÓRIO) ==\n'
       + 'Marque "precisaHumano": true e preencha "motivoHumano" com um resumo curto SOMENTE quando: (a) o cliente pedir explicitamente para falar com um atendente/humano/pessoa, OU (b) o cliente perguntar algo que você não sabe responder com confiança (informação que não está disponível para você, caso muito específico ou fora do que você pode resolver). Nesse caso, sua "reply" deve avisar educadamente que um atendente vai continuar o atendimento em breve — NUNCA invente uma resposta que você não tem certeza. Se não se aplicar, use "precisaHumano": false e "motivoHumano": null.\n'
       + '== AGENDAMENTO FECHADO (OBRIGATÓRIO) ==\n'
-      + 'Marque "agendamentoFechado": true e preencha "agendamentoData" com a data/horário combinado SOMENTE no momento em que o cliente CONFIRMAR um agendamento/data para o evento (ele concordou com uma data e horário específicos). Nas demais mensagens use "agendamentoFechado": false e "agendamentoData": null.';
+      + 'Marque "agendamentoFechado": true e preencha "agendamentoData" com a data/horário combinado SOMENTE no momento em que o cliente CONFIRMAR um agendamento/data para o evento (ele concordou com uma data e horário específicos). Nas demais mensagens use "agendamentoFechado": false e "agendamentoData": null.'
+      + (cfg.gerarImagemAtivo
+        ? ('\n\n== GERAÇÃO DE IMAGEM COM IA (OBRIGATÓRIO) ==\nMarque "gerarImagem": true e preencha "promptImagem" SOMENTE quando o cliente pedir para ver algo personalizado que não existe no catálogo (ex: "mostra como fica uma caixa azul com o meu logo", "consegue gerar um exemplo com tema de dinossauro?"). "promptImagem" deve ser uma descrição detalhada EM INGLÊS do que gerar (o modelo de imagem entende melhor em inglês). Não use isso para pedidos que o catálogo já atende — nesse caso prefira "sendImages". Se não se aplicar, use "gerarImagem": false e "promptImagem": null.')
+        : '\n\nA geração de imagem com IA está desativada para este agente — sempre responda "gerarImagem": false e "promptImagem": null.');
 
     const horaBR = new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo', hour: 'numeric', hour12: false });
     const saudacao = Number(horaBR) < 12 ? 'Bom dia' : Number(horaBR) < 18 ? 'Boa tarde' : 'Boa noite';
@@ -263,6 +266,15 @@ module.exports = async (req, res) => {
           imagesSent++;
           await new Promise((r) => setTimeout(r, 500)); // evita rajada/flood na uazapi
         }
+      }
+      // gera uma imagem sob medida com IA (fora do catálogo) — só se a ferramenta
+      // estiver ligada nesse agente; nunca derruba a resposta se falhar
+      if (cfg.gerarImagemAtivo && parsed && parsed.gerarImagem && parsed.promptImagem) {
+        try {
+          const dataUrl = await geminiGenerateImage(parsed.promptImagem, geminiKey);
+          await uazapiSendImage(uazBase, uazToken, from, dataUrl);
+          imagesSent++;
+        } catch (e) { console.error('[imagem IA] falha ao gerar/enviar:', e.message || e); }
       }
     }
     return res.status(200).json({ ok: true, type: type || 'text', reply, replied, imagesSent });
@@ -474,6 +486,8 @@ async function geminiGenerate(system, parts, key, model, temperature, jsonMode) 
         motivoHumano: { type: 'STRING', nullable: true },
         agendamentoFechado: { type: 'BOOLEAN' },
         agendamentoData: { type: 'STRING', nullable: true },
+        gerarImagem: { type: 'BOOLEAN' },
+        promptImagem: { type: 'STRING', nullable: true },
       },
       required: ['reply', 'sendImages', 'estagioFunil', 'precisaHumano', 'agendamentoFechado'],
     };
@@ -488,6 +502,23 @@ async function geminiGenerate(system, parts, key, model, temperature, jsonMode) 
   if (!r.ok) throw new Error('Gemini: ' + (data.error && data.error.message || r.status));
   const out = data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts || [];
   return out.map(p => p.text || '').join('').trim();
+}
+
+// gera uma imagem sob medida (ferramenta "Gerar imagens com IA" do agente) quando o
+// cliente pede algo fora do catálogo — usa a mesma GEMINI_API_KEY, modelo próprio de imagem
+async function geminiGenerateImage(prompt, key) {
+  const model = 'gemini-2.5-flash-image';
+  const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + encodeURIComponent(key);
+  const payload = { contents: [{ role: 'user', parts: [{ text: prompt }] }] };
+  const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+  const data = await r.json();
+  if (!r.ok) throw new Error('Gemini imagem: ' + (data.error && data.error.message || r.status));
+  const parts = (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) || [];
+  const imgPart = parts.find((p) => p.inlineData || p.inline_data);
+  const inline = imgPart && (imgPart.inlineData || imgPart.inline_data);
+  if (!inline || !inline.data) throw new Error('Gemini não retornou imagem');
+  const mime = inline.mimeType || inline.mime_type || 'image/png';
+  return 'data:' + mime + ';base64,' + inline.data;
 }
 
 // marca a(s) mensagem(ns) recebida(s) como lida (check azul) — best-effort,
