@@ -1676,7 +1676,7 @@
 <x-dc>
 <helmet>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/dist/tabler-icons.min.css">
-<script>window.__VERSATIL_BUILD__ = "1784036000000";</script>
+<script>window.__VERSATIL_BUILD__ = "1784038000000";</script>
 <style>
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;height:100%;}
@@ -3858,14 +3858,16 @@ POLÍTICAS: trocas em até 7 dias com nota." style="padding:14px 15px;border:1px
         <sc-if value="{{ authError }}" hint-placeholder-val="{{ false }}">
           <div style="background:var(--color-background-danger);color:var(--color-text-danger);border-radius:9px;padding:10px 13px;font-size:13px;margin-bottom:16px;">{{ authError }}</div>
         </sc-if>
-        <div style="display:flex;flex-direction:column;gap:14px;">
-          <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:#9db3cc;">Usuário
-            <input name="username" type="text" autocapitalize="off" autocomplete="username" value="{{ authForm.username }}" onInput="{{ onAuthField }}" onKeyDown="{{ onAuthKey }}" placeholder="seu usuário" style="padding:12px 14px;border:1px solid rgba(255,255,255,.14);border-radius:10px;background:#151f36;color:#fff;font-size:14px;">
-          </label>
-          <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:#9db3cc;">Senha
-            <input name="password" type="password" value="{{ authForm.password }}" onInput="{{ onAuthField }}" onKeyDown="{{ onAuthKey }}" placeholder="••••••••" style="padding:12px 14px;border:1px solid rgba(255,255,255,.14);border-radius:10px;background:#151f36;color:#fff;font-size:14px;">
-          </label>
-          <button onClick="{{ doLogin }}" disabled="{{ authBusy }}" style="{{ authBtnStyle }}">{{ authBtnLabel }}</button>
+        <div style="background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.14);border-radius:20px;padding:26px 24px;box-shadow:0 12px 32px rgba(0,0,0,.28);">
+          <div style="display:flex;flex-direction:column;gap:14px;">
+            <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:#9db3cc;">Usuário
+              <input name="username" type="text" autocapitalize="off" autocomplete="username" value="{{ authForm.username }}" onInput="{{ onAuthField }}" onKeyDown="{{ onAuthKey }}" placeholder="seu usuário" style="padding:12px 14px;border:1px solid rgba(255,255,255,.14);border-radius:10px;background:#151f36;color:#fff;font-size:14px;">
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:#9db3cc;">Senha
+              <input name="password" type="password" value="{{ authForm.password }}" onInput="{{ onAuthField }}" onKeyDown="{{ onAuthKey }}" placeholder="••••••••" style="padding:12px 14px;border:1px solid rgba(255,255,255,.14);border-radius:10px;background:#151f36;color:#fff;font-size:14px;">
+            </label>
+            <button onClick="{{ doLogin }}" disabled="{{ authBusy }}" style="{{ authBtnStyle }}">{{ authBtnLabel }}</button>
+          </div>
         </div>
       </div>
     </div>
