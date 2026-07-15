@@ -1676,7 +1676,7 @@
 <x-dc>
 <helmet>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/dist/tabler-icons.min.css">
-<script>window.__VERSATIL_BUILD__ = "1784038000000";</script>
+<script>window.__VERSATIL_BUILD__ = "1784041000000";</script>
 <style>
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;height:100%;}
@@ -1709,7 +1709,7 @@ html,body{margin:0;padding:0;height:100%;}
   }
 }
 input,select,textarea,button{font-family:inherit;font-size:14px;color:var(--color-text-primary);}
-input:focus,select:focus,textarea:focus{outline:2px solid #3b82f6;outline-offset:-1px;}
+input:focus,select:focus,textarea:focus{outline:2px solid #14b8a6;outline-offset:-1px;}
 ::-webkit-scrollbar{width:10px;height:10px;}
 ::-webkit-scrollbar-thumb{background:var(--color-border-tertiary);border-radius:8px;}
 ::-webkit-scrollbar-track{background:transparent;}
@@ -1835,7 +1835,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #3b82f6;outline-offset
         </div>
       </sc-if>
       <div style="display:flex;align-items:center;gap:10px;padding-top:6px;">
-        <div style="width:34px;height:34px;border-radius:50%;background:#3b82f6;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;">{{ authInitials }}</div>
+        <div style="width:34px;height:34px;border-radius:50%;background:#14b8a6;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;">{{ authInitials }}</div>
         <div style="flex:1;min-width:0;">
           <div style="font-size:13px;font-weight:600;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ authUsername }}</div>
           <div style="font-size:11px;color:#8ea3c2;">Conectado</div>
@@ -2486,7 +2486,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #3b82f6;outline-offset
                             <span style="min-width:0;"><span style="display:block;font-weight:600;font-size:13.5px;color:var(--color-text-primary);">Resolver</span><span style="display:block;font-size:11.5px;color:var(--color-text-secondary);margin-top:1px;">Arquiva e devolve à IA em 30 min</span></span>
                           </button>
                           <button onClick="{{ onRenomearConv }}" style="display:flex;align-items:center;gap:11px;width:100%;border:none;background:transparent;cursor:pointer;padding:12px 14px;text-align:left;border-bottom:1px solid var(--color-border-tertiary);">
-                            <i class="ti ti-edit" style="font-size:18px;color:#3b82f6;flex-shrink:0;"></i>
+                            <i class="ti ti-edit" style="font-size:18px;color:#14b8a6;flex-shrink:0;"></i>
                             <span style="min-width:0;"><span style="display:block;font-weight:600;font-size:13.5px;color:var(--color-text-primary);">Renomear contato</span><span style="display:block;font-size:11.5px;color:var(--color-text-secondary);margin-top:1px;">Altera o nome exibido</span></span>
                           </button>
                           <button onClick="{{ onAddCliente }}" style="display:flex;align-items:center;gap:11px;width:100%;border:none;background:transparent;cursor:pointer;padding:12px 14px;text-align:left;border-bottom:1px solid var(--color-border-tertiary);">
@@ -2531,7 +2531,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #3b82f6;outline-offset
                     <div style="padding:12px 18px;display:flex;gap:9px;align-items:flex-end;position:relative;">
                       <sc-if value="{{ attachMenuOpen }}" hint-placeholder-val="{{ false }}">
                         <div style="position:absolute;left:16px;bottom:60px;background:var(--color-background-primary);border:1px solid var(--color-border-tertiary);border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.18);padding:6px;display:flex;flex-direction:column;gap:2px;z-index:20;min-width:170px;">
-                          <button onClick="{{ onPickImage }}" style="display:flex;align-items:center;gap:10px;background:none;border:none;cursor:pointer;padding:10px 12px;border-radius:9px;font-size:13.5px;font-weight:600;color:var(--color-text-primary);text-align:left;"><i class="ti ti-photo" style="font-size:18px;color:#3b82f6;"></i>Foto / Imagem</button>
+                          <button onClick="{{ onPickImage }}" style="display:flex;align-items:center;gap:10px;background:none;border:none;cursor:pointer;padding:10px 12px;border-radius:9px;font-size:13.5px;font-weight:600;color:var(--color-text-primary);text-align:left;"><i class="ti ti-photo" style="font-size:18px;color:#14b8a6;"></i>Foto / Imagem</button>
                           <button onClick="{{ onPickCatalogo }}" style="display:flex;align-items:center;gap:10px;background:none;border:none;cursor:pointer;padding:10px 12px;border-radius:9px;font-size:13.5px;font-weight:600;color:var(--color-text-primary);text-align:left;white-space:nowrap;"><i class="ti ti-category" style="font-size:18px;color:#f59e0b;"></i>Fotos do catálogo</button>
                           <button onClick="{{ onPickDoc }}" style="display:flex;align-items:center;gap:10px;background:none;border:none;cursor:pointer;padding:10px 12px;border-radius:9px;font-size:13.5px;font-weight:600;color:var(--color-text-primary);text-align:left;"><i class="ti ti-file-text" style="font-size:18px;color:#6d28d9;"></i>Documento</button>
                           <button onClick="{{ onPickAudio }}" style="display:flex;align-items:center;gap:10px;background:none;border:none;cursor:pointer;padding:10px 12px;border-radius:9px;font-size:13.5px;font-weight:600;color:var(--color-text-primary);text-align:left;"><i class="ti ti-microphone" style="font-size:18px;color:#16a34a;"></i>Áudio</button>
@@ -3813,12 +3813,12 @@ POLÍTICAS: trocas em até 7 dias com nota." style="padding:14px 15px;border:1px
   <!-- ============ BANNER DE ATUALIZAÇÃO ============ -->
   <sc-if value="{{ updateAvailable }}" hint-placeholder-val="{{ false }}">
     <div style="position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:9999;background:#1a2b42;color:#fff;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.35);padding:14px 16px;display:flex;align-items:center;gap:14px;max-width:calc(100vw - 40px);">
-      <div style="width:36px;height:36px;border-radius:50%;background:rgba(59,130,246,.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="ti ti-sparkles" style="font-size:19px;color:#60a5fa;"></i></div>
+      <div style="width:36px;height:36px;border-radius:50%;background:rgba(20,184,166,.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="ti ti-sparkles" style="font-size:19px;color:#60a5fa;"></i></div>
       <div style="flex:1;min-width:0;">
         <div style="font-weight:700;font-size:14px;">Nova atualização disponível</div>
         <div style="font-size:12.5px;color:rgba(255,255,255,.7);">Uma versão mais recente do app foi publicada.</div>
       </div>
-      <button onClick="{{ onReloadApp }}" style="background:#3b82f6;color:#fff;border:none;border-radius:10px;padding:10px 16px;font-weight:700;font-size:13.5px;cursor:pointer;white-space:nowrap;flex-shrink:0;">Atualizar agora</button>
+      <button onClick="{{ onReloadApp }}" style="background:#14b8a6;color:#fff;border:none;border-radius:10px;padding:10px 16px;font-weight:700;font-size:13.5px;cursor:pointer;white-space:nowrap;flex-shrink:0;">Atualizar agora</button>
     </div>
   </sc-if>
 
@@ -3902,7 +3902,7 @@ POLÍTICAS: trocas em até 7 dias com nota." style="padding:14px 15px;border:1px
 <!-- ============ VERIFICANDO SESSÃO ============ -->
 <sc-if value="{{ authChecking }}" hint-placeholder-val="{{ true }}">
   <div style="height:100vh;width:100%;display:flex;align-items:center;justify-content:center;background:#0a1220;">
-    <i class="ti ti-loader-2" style="font-size:32px;color:#3b82f6;animation:spin 1s linear infinite;"></i>
+    <i class="ti ti-loader-2" style="font-size:32px;color:#14b8a6;animation:spin 1s linear infinite;"></i>
   </div>
 </sc-if>
 
@@ -3953,7 +3953,7 @@ class Component extends DCLogic {
     agentes: [],
     canais: [],
     funilClientes: [],
-    brand: { nome: 'Versatil', subtitulo: 'Gestão Financeira', logoUrl: '', corPrimaria: '#3b82f6', corSecundaria: '#22d3ee' },
+    brand: { nome: 'Versatil', subtitulo: 'Gestão Financeira', logoUrl: '', corPrimaria: '#14b8a6', corSecundaria: '#2563eb' },
     brandUploading: false,
     configSection: 'perfil',
     wppStatus: 'desconectado',
@@ -4264,7 +4264,7 @@ class Component extends DCLogic {
       tab: 'configuracoes', accountMenuOpen: false, configSection: 'perfil',
       form: {
         nome: b.nome || 'Versatil', subtitulo: b.subtitulo || '', logoUrl: b.logoUrl || '',
-        corPrimaria: b.corPrimaria || '#3b82f6', corSecundaria: b.corSecundaria || '#22d3ee',
+        corPrimaria: b.corPrimaria || '#14b8a6', corSecundaria: b.corSecundaria || '#2563eb',
         currentPassword: '', newPassword: '', confirmPassword: '',
       },
     });
@@ -4295,7 +4295,7 @@ class Component extends DCLogic {
   saveConfigSite() {
     const f = this.state.form || {};
     if (!f.nome || !f.nome.trim()) return this.toast('error', 'Informe o nome da empresa');
-    const brand = { nome: f.nome.trim(), subtitulo: (f.subtitulo || '').trim(), logoUrl: f.logoUrl || '', corPrimaria: f.corPrimaria || '#3b82f6', corSecundaria: f.corSecundaria || '#22d3ee' };
+    const brand = { nome: f.nome.trim(), subtitulo: (f.subtitulo || '').trim(), logoUrl: f.logoUrl || '', corPrimaria: f.corPrimaria || '#14b8a6', corSecundaria: f.corSecundaria || '#2563eb' };
     this.setState({ brand }, () => { this.persistCA(); this.toast('success', 'Preferências salvas'); });
   }
   onBrandLogoChosen = (e) => {
@@ -4383,7 +4383,7 @@ class Component extends DCLogic {
     // conversas NUNCA vem do config compartilhado (fonte real: WhatsApp/localStorage) — evita apagar conversas ao sincronizar
     if (shared) { const localConv = saved && saved.conversas; saved = Object.assign({}, saved || {}, shared); if (localConv) saved.conversas = localConv; }
     const defAgentes = [
-      { id: 'ag1', nome: 'Atendente Virtual', icon: 'ti-headset', cor: '#3b82f6', ativo: true, papel: 'atendimento', desc: 'Responde dúvidas de clientes automaticamente com base no histórico da conversa.', tom: 'Cordial e objetivo', modelo: 'Claude Haiku', gatilho: 'Mensagem recebida', gemini: { model: 'gemini-flash-latest' }, canais: [] },
+      { id: 'ag1', nome: 'Atendente Virtual', icon: 'ti-headset', cor: '#14b8a6', ativo: true, papel: 'atendimento', desc: 'Responde dúvidas de clientes automaticamente com base no histórico da conversa.', tom: 'Cordial e objetivo', modelo: 'Claude Haiku', gatilho: 'Mensagem recebida', gemini: { model: 'gemini-flash-latest' }, canais: [] },
       { id: 'ag2', nome: 'Qualificador de Leads', icon: 'ti-filter-check', cor: '#8b5cf6', ativo: false, papel: 'vendas', desc: 'Identifica intenção de compra e prioriza as conversas mais quentes.', tom: 'Consultivo', modelo: 'Claude Haiku', gatilho: 'Nova conversa', gemini: { model: 'gemini-flash-latest' }, canais: [] },
       { id: 'ag3', nome: 'Cobrança Amigável', icon: 'ti-cash', cor: '#f59e0b', ativo: false, papel: 'financeiro', desc: 'Envia lembretes de pagamento e negocia prazos de forma educada.', tom: 'Firme e cordial', modelo: 'Claude Haiku', gatilho: 'Fatura vencida', gemini: { model: 'gemini-flash-latest' }, canais: [] },
       { id: 'ag4', nome: 'FAQ Financeiro', icon: 'ti-help-circle', cor: '#10b981', ativo: true, papel: 'suporte', desc: 'Responde perguntas frequentes sobre pedidos, prazos, produtos e preços.', tom: 'Didático', modelo: 'Claude Haiku', gatilho: 'Palavra-chave', gemini: { model: 'gemini-flash-latest' }, canais: [] },
@@ -4392,7 +4392,7 @@ class Component extends DCLogic {
     const DEMO_IDS = ['cv1', 'cv2', 'cv3'];
     const defCanais = [
       { id: 'ch_wpp', nome: 'WhatsApp Business', tipo: 'WhatsApp', icon: 'ti-brand-whatsapp', cor: '#25D366', status: 'desconectado', detalhe: 'Não conectado', uazapi: { baseUrl: '', adminToken: '', instanceName: 'versatil', instanceToken: '', phone: '' } },
-      { id: 'ch_site', nome: 'Chat do site', tipo: 'Chat do site', icon: 'ti-message-dots', cor: '#3b82f6', status: 'conectado', detalhe: 'versatil.com.br' },
+      { id: 'ch_site', nome: 'Chat do site', tipo: 'Chat do site', icon: 'ti-message-dots', cor: '#14b8a6', status: 'conectado', detalhe: 'versatil.com.br' },
       { id: 'ch_mail', nome: 'E-mail', tipo: 'E-mail', icon: 'ti-mail', cor: '#6b7280', status: 'conectado', detalhe: 'atendimento@versatil.com.br' },
     ];
     const savedWpp = saved && saved.canais && saved.canais.find(c => c.tipo === 'WhatsApp' && c.status === 'conectado');
@@ -4412,7 +4412,7 @@ class Component extends DCLogic {
       canais: (saved && saved.canais) || defCanais,
       wppStatus: savedWpp ? 'conectado' : 'desconectado',
       activeConv: null,
-      brand: Object.assign({ nome: 'Versatil', subtitulo: 'Gestão Financeira', logoUrl: '', corPrimaria: '#3b82f6', corSecundaria: '#22d3ee' }, (saved && saved.brand) || {}),
+      brand: Object.assign({ nome: 'Versatil', subtitulo: 'Gestão Financeira', logoUrl: '', corPrimaria: '#14b8a6', corSecundaria: '#2563eb' }, (saved && saved.brand) || {}),
     }, () => {
       // NUNCA sincroniza com o Supabase logo após carregar: se a leitura acima falhou
       // (rede, RLS, etc.) o estado aqui é só o fallback local/default, e reenviar isso
@@ -5294,7 +5294,7 @@ class Component extends DCLogic {
     a = a || {};
     const prompt = a.promptSistema || ((a.desc || '') + (a.tom ? ('\n\nTom de voz: ' + a.tom + '.') : '') + '\nResponda sempre em português do Brasil, de forma curta, cordial e útil.');
     return Object.assign({
-      papel: 'atendimento', icon: 'ti-robot', cor: '#3b82f6', ativo: true,
+      papel: 'atendimento', icon: 'ti-robot', cor: '#14b8a6', ativo: true,
       desc: '', tom: 'Cordial e objetivo', gatilho: 'Mensagem recebida',
       avatarUrl: '', promptSistema: prompt.trim(), boasVindas: a.boasVindas || 'Boa tarde! Como posso ajudar você hoje?',
       temperatura: (a.temperatura != null ? a.temperatura : 0.5),
@@ -5318,7 +5318,7 @@ class Component extends DCLogic {
     this.setState({ agentEditor: true, agentTab: 'geral', form: this.normAgent(a) });
   }
   openNewAgent() {
-    this.setState({ agentEditor: true, agentTab: 'geral', form: this.normAgent({ nome: '', icon: 'ti-robot', cor: '#3b82f6', ativo: true, papel: 'atendimento', desc: '', promptSistema: 'Você é um assistente de atendimento. Responda em português do Brasil, curto e cordial.' }) });
+    this.setState({ agentEditor: true, agentTab: 'geral', form: this.normAgent({ nome: '', icon: 'ti-robot', cor: '#14b8a6', ativo: true, papel: 'atendimento', desc: '', promptSistema: 'Você é um assistente de atendimento. Responda em português do Brasil, curto e cordial.' }) });
   }
   openAgentConfig_DISABLED(id) {
     const a = (this.state.agentes || []).find(x => x.id === id);
@@ -5326,7 +5326,7 @@ class Component extends DCLogic {
     this.setState({ agentEditor: true, agentTab: 'geral', form: this.normAgent(a) });
   }
   openNewAgent_DISABLED() {
-    this.setState({ agentEditor: true, agentTab: 'geral', form: this.normAgent({ nome: '', icon: 'ti-robot', cor: '#3b82f6', ativo: true, papel: 'atendimento', desc: '', promptSistema: 'Você é um assistente de atendimento da Versatil. Responda sempre em português do Brasil, de forma curta, cordial e útil.' }) });
+    this.setState({ agentEditor: true, agentTab: 'geral', form: this.normAgent({ nome: '', icon: 'ti-robot', cor: '#14b8a6', ativo: true, papel: 'atendimento', desc: '', promptSistema: 'Você é um assistente de atendimento da Versatil. Responda sempre em português do Brasil, de forma curta, cordial e útil.' }) });
   }
   closeAgentEditor() { this.setState({ agentEditor: false, form: {} }); }
   async testarAgente() {
@@ -5436,7 +5436,7 @@ class Component extends DCLogic {
       'Telegram': { icon: 'ti-brand-telegram', cor: '#229ED9' },
       'Facebook Messenger': { icon: 'ti-brand-messenger', cor: '#0084FF' },
       'E-mail': { icon: 'ti-mail', cor: '#6b7280' },
-      'Chat do site': { icon: 'ti-message-dots', cor: '#3b82f6' },
+      'Chat do site': { icon: 'ti-message-dots', cor: '#14b8a6' },
     };
     return map[tipo] || { icon: 'ti-message-circle', cor: '#6b7280' };
   }
@@ -6131,8 +6131,8 @@ class Component extends DCLogic {
       vm.brandHasLogo = !!b.logoUrl;
       vm.brandNoLogo = !b.logoUrl;
       vm.brandLogoUrl = b.logoUrl || '';
-      vm.brandHeaderStyle = { display: 'flex', alignItems: 'center', gap: '12px', padding: '22px 22px 20px', background: 'linear-gradient(180deg, ' + (b.corPrimaria || '#3b82f6') + '33, #000000)' };
-      vm.brandIconWrapStyle = { width: '38px', height: '38px', borderRadius: '10px', background: 'linear-gradient(135deg,' + (b.corPrimaria || '#3b82f6') + ',' + (b.corSecundaria || '#22d3ee') + ')', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff', flexShrink: 0, overflow: 'hidden' };
+      vm.brandHeaderStyle = { display: 'flex', alignItems: 'center', gap: '12px', padding: '22px 22px 20px', background: 'linear-gradient(180deg, ' + (b.corPrimaria || '#14b8a6') + '33, #000000)' };
+      vm.brandIconWrapStyle = { width: '38px', height: '38px', borderRadius: '10px', background: 'linear-gradient(135deg,' + (b.corPrimaria || '#14b8a6') + ',' + (b.corSecundaria || '#2563eb') + ')', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff', flexShrink: 0, overflow: 'hidden' };
     }
     vm.authError = S.authError || '';
     vm.authBusy = !!S.authBusy;
@@ -6155,7 +6155,7 @@ class Component extends DCLogic {
         { key: 'dashboard', label: 'Dashboard', icon: 'ti-layout-dashboard' },
       ] },
       { key: 'atendimento', label: 'ATENDIMENTO', items: [
-        { key: 'atendimento', label: 'Atendimento', icon: 'ti-messages', badge: unreadTotal || null, badgeColor: '#3b82f6' },
+        { key: 'atendimento', label: 'Atendimento', icon: 'ti-messages', badge: unreadTotal || null, badgeColor: '#14b8a6' },
         { key: 'funil', label: 'Funil de Vendas', icon: 'ti-chart-funnel', badge: (S.funilClientes || []).length || null, badgeColor: '#8b5cf6' },
         { key: 'agendamentos', label: 'Agendamentos', icon: 'ti-calendar-event', badge: (S.agendamentos || []).length || null, badgeColor: '#16a34a' },
         { key: 'agentes', label: 'Agentes IA', icon: 'ti-robot', badge: agentesAtivos || null, badgeColor: '#10b981' },
@@ -6200,10 +6200,10 @@ class Component extends DCLogic {
           style: {
             position: 'relative', display: 'flex', alignItems: 'center', gap: '11px', width: '100%', border: 'none', cursor: 'pointer',
             padding: '9px 12px', borderRadius: '9px', textAlign: 'left',
-            background: tab === n.key ? 'rgba(59,130,246,.20)' : 'transparent',
+            background: tab === n.key ? 'rgba(20,184,166,.20)' : 'transparent',
             color: tab === n.key ? '#fff' : '#aebed4',
           },
-          railStyle: { position: 'absolute', left: '-4px', top: '8px', bottom: '8px', width: '3px', borderRadius: '3px', background: tab === n.key ? '#3b82f6' : 'transparent' },
+          railStyle: { position: 'absolute', left: '-4px', top: '8px', bottom: '8px', width: '3px', borderRadius: '3px', background: tab === n.key ? '#14b8a6' : 'transparent' },
           badgeStyle: { background: n.badgeColor, color: '#fff', fontSize: '11px', fontWeight: 700, borderRadius: '999px', minWidth: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 6px' },
         })),
       };
@@ -6401,7 +6401,7 @@ class Component extends DCLogic {
         return keys.map(k => ({ label: this.monthLabel(k), value: map[k], valueShort: this.fmtMoneyShort(map[k]),
           fill: { width: '100%', borderRadius: '7px 7px 3px 3px', minHeight: '4px', height: Math.round(map[k] / max * 130) + 'px' } }));
       };
-      const vc = buildChart(D.vendas, 'data', 'valor', null).map(b => (b.fill.background = 'linear-gradient(180deg,#3b82f6,#60a5fa)', b));
+      const vc = buildChart(D.vendas, 'data', 'valor', null).map(b => (b.fill.background = 'linear-gradient(180deg,#14b8a6,#5eead4)', b));
       const cc = buildChart(D.compras, 'data', null, (r) => this.compraTotal(r)).map(b => (b.fill.background = 'linear-gradient(180deg,#0ea5e9,#38bdf8)', b));
       vm.vendasChart = vc.length ? vc : [{ label: '—', value: 0, valueShort: '0', fill: { height: '4px', width: '100%', borderRadius: '7px', background: 'var(--color-background-tertiary)' } }];
       vm.comprasChart = cc.length ? cc : [{ label: '—', value: 0, valueShort: '0', fill: { height: '4px', width: '100%', borderRadius: '7px', background: 'var(--color-background-tertiary)' } }];
@@ -6415,7 +6415,7 @@ class Component extends DCLogic {
       const top = Object.keys(byClient).map(k => ({ nome: k, val: byClient[k] })).sort((a, b) => b.val - a.val).slice(0, 5);
       const topMax = Math.max(1, ...top.map(t => t.val));
       vm.noTopClientes = top.length === 0;
-      vm.topClientes = top.map(t => ({ nome: t.nome, valorFmt: this.fmtMoney(t.val), bar: { height: '100%', borderRadius: '99px', background: 'linear-gradient(90deg,#1a2b42,#3b82f6)', width: Math.round(t.val / topMax * 100) + '%' } }));
+      vm.topClientes = top.map(t => ({ nome: t.nome, valorFmt: this.fmtMoney(t.val), bar: { height: '100%', borderRadius: '99px', background: 'linear-gradient(90deg,#1a2b42,#14b8a6)', width: Math.round(t.val / topMax * 100) + '%' } }));
 
       const alerts = D.estoque.filter(p => this.num(p.quantidade) < this.num(p.minimo));
       vm.hasStockAlerts = alerts.length > 0;
@@ -6784,7 +6784,7 @@ class Component extends DCLogic {
         vm.chatMessages = conv.msgs.map((m, mi) => {
           const mine = m.from !== 'cliente'; const isIa = m.from === 'ia';
           const type = m.type || 'text';
-          const bubbleBase = { maxWidth: '74%', padding: '11px 15px', borderRadius: mine ? '15px 15px 4px 15px' : '15px 15px 15px 4px', fontSize: '14px', lineHeight: 1.45, whiteSpace: 'pre-wrap', background: isIa ? 'linear-gradient(135deg,#6d28d9,#3b82f6)' : mine ? '#1a2b42' : 'var(--color-background-primary)', color: (isIa || mine) ? '#fff' : 'var(--color-text-primary)', border: (isIa || mine) ? 'none' : '1px solid var(--color-border-tertiary)' };
+          const bubbleBase = { maxWidth: '74%', padding: '11px 15px', borderRadius: mine ? '15px 15px 4px 15px' : '15px 15px 15px 4px', fontSize: '14px', lineHeight: 1.45, whiteSpace: 'pre-wrap', background: isIa ? 'linear-gradient(135deg,#6d28d9,#14b8a6)' : mine ? '#1a2b42' : 'var(--color-background-primary)', color: (isIa || mine) ? '#fff' : 'var(--color-text-primary)', border: (isIa || mine) ? 'none' : '1px solid var(--color-border-tertiary)' };
           const muted = (isIa || mine) ? 'rgba(255,255,255,.75)' : 'var(--color-text-secondary)';
           const h = React.createElement;
           let mediaEl = null;
@@ -6896,7 +6896,7 @@ class Component extends DCLogic {
       vm.replyText = S.chatReplyTo ? S.chatReplyTo.text : '';
       vm.onCancelReply = this.cancelReply;
       vm.aiBtnDisabled = S.aiThinking || !conv;
-      vm.aiBtnStyle = { background: S.aiThinking ? 'var(--color-background-tertiary)' : 'linear-gradient(135deg,#6d28d9,#3b82f6)', color: S.aiThinking ? 'var(--color-text-secondary)' : '#fff', border: 'none', borderRadius: '11px', width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: S.aiThinking ? 'default' : 'pointer', flexShrink: 0 };
+      vm.aiBtnStyle = { background: S.aiThinking ? 'var(--color-background-tertiary)' : 'linear-gradient(135deg,#6d28d9,#14b8a6)', color: S.aiThinking ? 'var(--color-text-secondary)' : '#fff', border: 'none', borderRadius: '11px', width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: S.aiThinking ? 'default' : 'pointer', flexShrink: 0 };
     }
 
     // ===== FUNIL DE VENDAS (kanban) =====
