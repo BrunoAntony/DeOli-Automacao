@@ -1676,7 +1676,7 @@
 <x-dc>
 <helmet>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/dist/tabler-icons.min.css">
-<script>window.__VERSATIL_BUILD__ = "1784033000000";</script>
+<script>window.__VERSATIL_BUILD__ = "1784036000000";</script>
 <style>
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;height:100%;}
@@ -2899,6 +2899,28 @@ input:focus,select:focus,textarea:focus{outline:2px solid #3b82f6;outline-offset
                 </div>
               </sc-if>
 
+              <!-- ADMIN (desenvolvedores — acesso a todas as empresas) -->
+              <sc-if value="{{ isCfgAdministradores }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-direction:column;gap:18px;">
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;">
+                    <div><h2 style="margin:0;font-size:20px;font-weight:700;display:flex;align-items:center;gap:9px;"><i class="ti ti-shield-star" style="font-size:19px;color:var(--color-text-secondary);"></i>Admin</h2><p style="margin:4px 0 0;font-size:14px;color:var(--color-text-secondary);">Desenvolvedores com acesso a todas as empresas do sistema.</p></div>
+                    <button onClick="{{ onNovoDev }}" style="display:inline-flex;align-items:center;gap:7px;background:#1a2b42;color:#fff;border:none;border-radius:10px;padding:10px 16px;font-weight:700;font-size:13.5px;cursor:pointer;flex-shrink:0;"><i class="ti ti-user-plus" style="font-size:16px;"></i>Adicionar</button>
+                  </div>
+                  <sc-if value="{{ devUsersEmpty }}" hint-placeholder-val="{{ false }}">
+                    <div style="padding:24px;text-align:center;color:var(--color-text-secondary);font-size:13.5px;background:var(--color-background-secondary);border-radius:9px;">Nenhum desenvolvedor cadastrado ainda.</div>
+                  </sc-if>
+                  <sc-for list="{{ devUsersList }}" as="u" hint-placeholder-count="1">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 15px;border:1px solid var(--color-border-tertiary);border-radius:9px;">
+                      <span style="font-size:13.5px;font-weight:600;">{{ u.username }}</span>
+                      <div style="display:flex;align-items:center;gap:10px;">
+                        <span style="display:inline-flex;align-items:center;padding:3px 10px;border-radius:999px;font-size:11.5px;font-weight:700;background:var(--color-background-info);color:var(--color-text-info);">Desenvolvedor</span>
+                        <button onClick="{{ u.onRemove }}" title="Remover desenvolvedor" style="background:none;border:none;color:var(--color-text-secondary);cursor:pointer;padding:5px;display:flex;"><i class="ti ti-trash" style="font-size:16px;"></i></button>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-if>
+
             </div>
           </div>
         </div>
@@ -3525,6 +3547,33 @@ POLÍTICAS: trocas em até 7 dias com nota." style="padding:14px 15px;border:1px
             </div>
           </sc-if>
 
+          <!-- NOVO DESENVOLVEDOR -->
+          <sc-if value="{{ m_novodev }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:16px;">
+              <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--color-text-secondary);">Usuário (login)
+                <input name="username" value="{{ form.username }}" onInput="{{ onFormChange }}" placeholder="ex: bruno" style="padding:11px 13px;border:1px solid var(--color-border-tertiary);border-radius:9px;background:var(--color-background-primary);">
+              </label>
+              <div style="display:flex;align-items:flex-start;gap:11px;background:var(--color-background-warning);color:var(--color-text-warning);border-radius:11px;padding:13px 15px;font-size:13px;line-height:1.5;"><i class="ti ti-alert-triangle" style="font-size:19px;flex-shrink:0;"></i>Esse usuário terá acesso administrativo a TODAS as empresas cadastradas. Nasce com a senha padrão "123" e será obrigado a trocá-la no primeiro login.</div>
+            </div>
+          </sc-if>
+
+          <!-- REMOVER DESENVOLVEDOR -->
+          <sc-if value="{{ m_excluirdev }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:18px;">
+              <div style="display:flex;align-items:flex-start;gap:13px;">
+                <div style="width:44px;height:44px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--color-background-danger);color:var(--color-text-danger);"><i class="ti ti-alert-triangle" style="font-size:22px;"></i></div>
+                <div>
+                  <div style="font-weight:700;font-size:15px;">Remover "{{ form._username }}"?</div>
+                  <div style="font-size:13.5px;color:var(--color-text-secondary);margin-top:3px;line-height:1.5;">Esse desenvolvedor perde o acesso a todas as empresas imediatamente. Esta ação não pode ser desfeita.</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:12px;justify-content:flex-end;">
+                <button onClick="{{ closeModal }}" style="background:var(--color-background-tertiary);color:var(--color-text-primary);border:none;border-radius:10px;padding:11px 20px;font-weight:600;font-size:14px;cursor:pointer;">Cancelar</button>
+                <button onClick="{{ onDoExcluirDev }}" style="background:#ef4444;color:#fff;border:none;border-radius:10px;padding:11px 22px;font-weight:600;font-size:14px;cursor:pointer;">Remover</button>
+              </div>
+            </div>
+          </sc-if>
+
           <!-- ENVIAR FOTOS DO CATÁLOGO NA CONVERSA (seleção múltipla) -->
           <sc-if value="{{ m_catpicker }}" hint-placeholder-val="{{ false }}">
             <div style="display:flex;flex-direction:column;gap:14px;">
@@ -3933,7 +3982,7 @@ class Component extends DCLogic {
     if (s && s.role === 'funcionario' && !s.isAdmin && this.FUNCIONARIO_TABS.indexOf(this.state.tab) < 0) {
       this.setState({ tab: 'atendimento' });
     }
-    this.loadAll(); this.seedAtendimento(); this.loadCatalogo(); this.loadFunil(); this.loadAgendamentos(); this.loadEmpresas(); this.loadUsuarios(); this.loadChatInterno();
+    this.loadAll(); this.seedAtendimento(); this.loadCatalogo(); this.loadFunil(); this.loadAgendamentos(); this.loadEmpresas(); this.loadUsuarios(); this.loadChatInterno(); this.loadDevUsers();
     setTimeout(() => this.checkRetornosIA(), 800);
     this._pollMsgs = setInterval(() => this.pollNovasMensagens(), 12000);
     this._updCheck = setInterval(() => this.checkForUpdate(), 60000);
@@ -3949,6 +3998,7 @@ class Component extends DCLogic {
   EMPRESAS_URL = 'https://webhook-blond-pi.vercel.app/api/empresas';
   SWITCH_EMPRESA_URL = 'https://webhook-blond-pi.vercel.app/api/switch-empresa';
   USERS_URL = 'https://webhook-blond-pi.vercel.app/api/users';
+  DEV_USERS_URL = 'https://webhook-blond-pi.vercel.app/api/dev-users';
   async authSignIn(username, password) {
     const r = await fetch(this.LOGIN_URL, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -4155,6 +4205,52 @@ class Component extends DCLogic {
       this.toast('info', 'Usuário "' + (f._username || '') + '" removido');
       this.loadUsuarios();
     } catch (e) { this.toast('error', 'Falha ao remover usuário: ' + (e.message || e)); }
+  }
+  // ---- desenvolvedores (acesso a todas as empresas — só quem já é dev gerencia) ----
+  async loadDevUsers() {
+    const S = this.state;
+    if (!S.authSession || !S.authSession.isAdmin) return;
+    try {
+      const r = await fetch(this.DEV_USERS_URL, { headers: { Authorization: 'Bearer ' + S.authSession.access_token } });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(data.error || ('HTTP ' + r.status));
+      this.setState({ devUsers: data.users || [] });
+    } catch (e) { console.warn('[dev-users] falha ao carregar:', e.message || e); }
+  }
+  openNovoDev() { this.setState({ modal: 'novo_dev', form: { username: '' } }); }
+  async saveNovoDev() {
+    const f = this.state.form || {};
+    const username = (f.username || '').trim();
+    if (!username) return this.toast('error', 'Informe o usuário');
+    try {
+      const r = await fetch(this.DEV_USERS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + this.state.authSession.access_token },
+        body: JSON.stringify({ username }),
+      });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(data.error || ('HTTP ' + r.status));
+      this.setState({ modal: null, form: {} });
+      this.toast('success', 'Desenvolvedor "' + username + '" criado — senha padrão: ' + (data.defaultPassword || '123') + ' (vai precisar trocar no primeiro login)');
+      this.loadDevUsers();
+    } catch (e) { this.toast('error', 'Falha ao criar desenvolvedor: ' + (e.message || e)); }
+  }
+  confirmExcluirDev(id, username) { this.setState({ modal: 'excluir_dev', form: { _userId: id, _username: username } }); }
+  async doExcluirDev() {
+    const f = this.state.form || {};
+    const userId = f._userId;
+    if (!userId) return;
+    try {
+      const r = await fetch(this.DEV_USERS_URL + '?id=' + encodeURIComponent(userId), {
+        method: 'DELETE',
+        headers: { Authorization: 'Bearer ' + this.state.authSession.access_token },
+      });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(data.error || ('HTTP ' + r.status));
+      this.setState({ modal: null, form: {} });
+      this.toast('info', 'Desenvolvedor "' + (f._username || '') + '" removido');
+      this.loadDevUsers();
+    } catch (e) { this.toast('error', 'Falha ao remover desenvolvedor: ' + (e.message || e)); }
   }
   // ---- página "Configurações" (Perfil / Segurança / Preferências) ----
   CHANGE_PASSWORD_URL = 'https://webhook-blond-pi.vercel.app/api/change-password';
@@ -5914,6 +6010,7 @@ class Component extends DCLogic {
     if (m === 'gcal_config') return this.saveGcalConfig();
     if (m === 'nova_empresa') return this.saveNovaEmpresa();
     if (m === 'novo_funcionario') return this.saveNovoFuncionario();
+    if (m === 'novo_dev') return this.saveNovoDev();
     if (m === 'drive_config') return this.saveDriveConfig();
     if (m === 'config_canal') return this.saveCanal();
     if (m === 'nova_categoria') return this.saveCategoria();
@@ -6150,18 +6247,19 @@ class Component extends DCLogic {
       showAdd: ['vendas', 'compras', 'despesas', 'estoque', 'clientes', 'fornecedores', 'produtos'].includes(tab) && !S.viewCompra, addLabel: addLabels[tab] || '', openAdd: () => this.openAdd(),
       stop: (e) => e.stopPropagation(),
       // modal
-      showModal: !!S.modal, modalTitle: { nova_venda: 'Nova Venda', nova_compra: 'Nova Ordem de Compra', nova_despesa: 'Nova Despesa', novo_produto: 'Novo Produto', novo_cliente: 'Novo Cliente', novo_fornecedor: 'Novo Fornecedor', nova_categoria: (S.form && S.form._id) ? (isImobiliaria ? 'Editar Tipo de Imóvel' : 'Editar Categoria') : (isImobiliaria ? 'Novo Tipo de Imóvel' : 'Nova Categoria'), subcategoria: (S.form && S.form._id) ? (isImobiliaria ? 'Editar Imóvel' : 'Editar Subcategoria') : (isImobiliaria ? 'Novo Imóvel' : 'Nova Subcategoria'), config_agente: S.form && S.form.id ? 'Configurar Agente' : 'Novo Agente', config_canal: S.form && S.form._new ? 'Adicionar Canal' : 'Configurar Canal', conectar_wpp: 'Conectar WhatsApp', nova_conversa: 'Nova Conversa', renomear_conv: 'Renomear Contato', add_cliente_conv: 'Adicionar aos Clientes', excluir_conv: 'Excluir Conversa', novo_agendamento: 'Novo Agendamento', gcal_config: 'Sincronizar Google Agenda', drive_config: 'Fotos do Catálogo via Google Drive', catalogo_picker: 'Enviar fotos do catálogo', nova_empresa: 'Nova Empresa', novo_funcionario: 'Novo Funcionário', excluir_funcionario: 'Remover Funcionário' }[S.modal] || '',
+      showModal: !!S.modal, modalTitle: { nova_venda: 'Nova Venda', nova_compra: 'Nova Ordem de Compra', nova_despesa: 'Nova Despesa', novo_produto: 'Novo Produto', novo_cliente: 'Novo Cliente', novo_fornecedor: 'Novo Fornecedor', nova_categoria: (S.form && S.form._id) ? (isImobiliaria ? 'Editar Tipo de Imóvel' : 'Editar Categoria') : (isImobiliaria ? 'Novo Tipo de Imóvel' : 'Nova Categoria'), subcategoria: (S.form && S.form._id) ? (isImobiliaria ? 'Editar Imóvel' : 'Editar Subcategoria') : (isImobiliaria ? 'Novo Imóvel' : 'Nova Subcategoria'), config_agente: S.form && S.form.id ? 'Configurar Agente' : 'Novo Agente', config_canal: S.form && S.form._new ? 'Adicionar Canal' : 'Configurar Canal', conectar_wpp: 'Conectar WhatsApp', nova_conversa: 'Nova Conversa', renomear_conv: 'Renomear Contato', add_cliente_conv: 'Adicionar aos Clientes', excluir_conv: 'Excluir Conversa', novo_agendamento: 'Novo Agendamento', gcal_config: 'Sincronizar Google Agenda', drive_config: 'Fotos do Catálogo via Google Drive', catalogo_picker: 'Enviar fotos do catálogo', nova_empresa: 'Nova Empresa', novo_funcionario: 'Novo Funcionário', excluir_funcionario: 'Remover Funcionário', novo_dev: 'Novo Desenvolvedor', excluir_dev: 'Remover Desenvolvedor' }[S.modal] || '',
       m_venda: S.modal === 'nova_venda', m_compra: S.modal === 'nova_compra', m_despesa: S.modal === 'nova_despesa', m_produto: S.modal === 'novo_produto', m_cliente: S.modal === 'novo_cliente', m_fornecedor: S.modal === 'novo_fornecedor', m_categoria: S.modal === 'nova_categoria', m_subcategoria: S.modal === 'subcategoria',
       m_agente: S.modal === 'config_agente', m_canal: S.modal === 'config_canal', m_wpp: S.modal === 'conectar_wpp', m_novaconv: S.modal === 'nova_conversa',
-      m_renomear: S.modal === 'renomear_conv', m_addcli: S.modal === 'add_cliente_conv', m_excluirconv: S.modal === 'excluir_conv', m_agendamento: S.modal === 'novo_agendamento', m_gcal: S.modal === 'gcal_config', m_drive: S.modal === 'drive_config', m_catpicker: S.modal === 'catalogo_picker', m_novaempresa: S.modal === 'nova_empresa', m_novofuncionario: S.modal === 'novo_funcionario', m_excluirfuncionario: S.modal === 'excluir_funcionario',
+      m_renomear: S.modal === 'renomear_conv', m_addcli: S.modal === 'add_cliente_conv', m_excluirconv: S.modal === 'excluir_conv', m_agendamento: S.modal === 'novo_agendamento', m_gcal: S.modal === 'gcal_config', m_drive: S.modal === 'drive_config', m_catpicker: S.modal === 'catalogo_picker', m_novaempresa: S.modal === 'nova_empresa', m_novofuncionario: S.modal === 'novo_funcionario', m_excluirfuncionario: S.modal === 'excluir_funcionario', m_novodev: S.modal === 'novo_dev', m_excluirdev: S.modal === 'excluir_dev',
       onDoExcluirFuncionario: () => this.doExcluirFuncionario(),
+      onDoExcluirDev: () => this.doExcluirDev(),
       brandUploading: !!S.brandUploading, brandNotUploading: !S.brandUploading,
       brandUploadLabel: S.brandUploading ? 'Enviando…' : 'Escolher imagem',
       brandFormHasLogo: !!(S.form && S.form.logoUrl), brandFormNoLogo: !(S.form && S.form.logoUrl),
       onBrandLogoChosen: this.onBrandLogoChosen, onRemoveBrandLogo: () => this.removeBrandLogo(),
       onDoExcluirConv: () => this.doExcluirConv(),
       onSendCatalogoPicker: () => this.sendCatalogoPicker(),
-      showModalFooter: !!S.modal && S.modal !== 'conectar_wpp' && S.modal !== 'config_canal' && S.modal !== 'nova_conversa' && S.modal !== 'renomear_conv' && S.modal !== 'add_cliente_conv' && S.modal !== 'excluir_conv' && S.modal !== 'novo_agendamento' && S.modal !== 'gcal_config' && S.modal !== 'catalogo_picker' && S.modal !== 'excluir_funcionario',
+      showModalFooter: !!S.modal && S.modal !== 'conectar_wpp' && S.modal !== 'config_canal' && S.modal !== 'nova_conversa' && S.modal !== 'renomear_conv' && S.modal !== 'add_cliente_conv' && S.modal !== 'excluir_conv' && S.modal !== 'novo_agendamento' && S.modal !== 'gcal_config' && S.modal !== 'catalogo_picker' && S.modal !== 'excluir_funcionario' && S.modal !== 'excluir_dev',
       agenteIsEdit: !!(S.form && S.form.id),
       onDeleteAgente: () => this.deleteAgente(S.form.id),
       onCanalUaChange: this.onCanalUaChange, onGeminiChange: this.onGeminiChange,
@@ -7029,6 +7127,7 @@ class Component extends DCLogic {
     if (vm.isConfiguracoes) {
       const cs = S.configSection || 'perfil';
       const souAdmin = !!(S.authSession && (S.authSession.role === 'admin' || S.authSession.isAdmin));
+      const souDev = !!(S.authSession && S.authSession.isAdmin);
       const secDefs = [
         { k: 'perfil', label: 'Perfil', icon: 'ti-user' },
         { k: 'seguranca', label: 'Segurança', icon: 'ti-shield-lock' },
@@ -7037,6 +7136,9 @@ class Component extends DCLogic {
       // bloqueada por RLS pro papel de funcionário — nem mostra a aba pra ele
       if (souAdmin) secDefs.push({ k: 'preferencias', label: 'Preferências', icon: 'ti-palette' });
       if (souAdmin) secDefs.push({ k: 'funcionarios', label: 'Funcionários', icon: 'ti-users' });
+      // ADMIN: só pra quem já é desenvolvedor (acesso a todas as empresas) —
+      // gerencia outros desenvolvedores, não os funcionários de uma empresa
+      if (souDev) secDefs.push({ k: 'administradores', label: 'Admin', icon: 'ti-shield-star' });
       vm.configSecoes = secDefs.map(d => ({
         label: d.label, icon: d.icon, onClick: () => this.setConfigSection(d.k),
         style: { display: 'flex', alignItems: 'center', gap: '10px', width: '100%', border: 'none', cursor: 'pointer', textAlign: 'left', padding: '10px 13px', borderRadius: '9px', fontSize: '13.5px', fontWeight: 600, background: cs === d.k ? 'var(--color-background-info)' : 'transparent', color: cs === d.k ? 'var(--color-text-info)' : 'var(--color-text-secondary)' },
@@ -7044,6 +7146,7 @@ class Component extends DCLogic {
       vm.isCfgPerfil = cs === 'perfil'; vm.isCfgSeguranca = cs === 'seguranca';
       vm.isCfgPreferencias = souAdmin && cs === 'preferencias';
       vm.isCfgFuncionarios = souAdmin && cs === 'funcionarios';
+      vm.isCfgAdministradores = souDev && cs === 'administradores';
       vm.cfgUsername = this.nomeUsuario(this.currentUsername()) || S.authUsername || '—';
       vm.cfgUserInitials = vm.authInitials;
       vm.onSaveSeguranca = () => this.saveChangePassword();
@@ -7057,6 +7160,14 @@ class Component extends DCLogic {
         }));
         vm.funcionariosEmpty = vm.funcionariosList.length === 0;
         vm.onNovoFuncionario = () => this.openNovoFuncionario();
+      }
+      if (vm.isCfgAdministradores) {
+        vm.devUsersList = (S.devUsers || []).map(u => ({
+          username: u.username,
+          onRemove: () => this.confirmExcluirDev(u.id, u.username),
+        }));
+        vm.devUsersEmpty = vm.devUsersList.length === 0;
+        vm.onNovoDev = () => this.openNovoDev();
       }
     }
 
